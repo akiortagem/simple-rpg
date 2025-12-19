@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Protocol, Sequence
 
 from .contracts import Color, InputEvent, Renderer
+from .sprites import CharacterMapSprite, CollisionDetector
 
 
 class Scene(ABC):
@@ -73,3 +74,88 @@ class DemoScene(Scene):
             size_variation,
         )
         renderer.draw_rect((200, 220, 255), rect)
+
+
+class RenderableTilemapLayer(Protocol):
+    """Renderable background or foreground tile layer."""
+
+    pixel_size: tuple[int, int] | None
+
+    def render(self, renderer: Renderer, camera_offset: tuple[int, int] = (0, 0)) -> None:
+        ...
+
+
+class MapSceneManager(Protocol):
+    """Collaborator for camera logic, overlays, and NPCs within a map scene."""
+
+    active_sprite: CharacterMapSprite | None
+    camera_offset: tuple[int, int]
+
+    def update(self, delta_time: float, sprites: Sequence[CharacterMapSprite]) -> None:
+        ...
+
+    def render(self, renderer: Renderer) -> None:
+        ...
+
+
+class MapScene(Scene):
+    """Tilemap-based scene coordinating characters and collisions."""
+
+    background_color: Color = (0, 0, 0)
+
+    def __init__(
+        self,
+        visual_tilemap: RenderableTilemapLayer,
+        collision_tilemap: CollisionDetector | RenderableTilemapLayer,
+        characters: Sequence[CharacterMapSprite],
+        manager: MapSceneManager,
+    ) -> None:
+        self.visual_tilemap = visual_tilemap
+        self.collision_tilemap = collision_tilemap
+        self.characters = list(characters)
+        self.manager = manager
+        self._pressed_keys: set[str] = set()
+
+        bounds = getattr(collision_tilemap, "pixel_size", None) or getattr(
+            collision_tilemap, "size", None
+        )
+        for sprite in self.characters:
+            sprite.collision_detector = collision_tilemap
+            sprite.map_bounds = bounds
+
+    def handle_events(self, events: Sequence[InputEvent]) -> None:
+        for event in events:
+            if event.type == "QUIT":
+                self.request_exit()
+                continue
+
+            key = None
+            if event.payload:
+                key = event.payload.get("key")
+            if event.type == "KEYDOWN" and isinstance(key, str):
+                self._pressed_keys.add(key)
+            elif event.type == "KEYUP" and isinstance(key, str):
+                self._pressed_keys.discard(key)
+
+        active = self._active_sprite()
+        if active:
+            active.handle_input(set(self._pressed_keys))
+
+    def update(self, delta_time: float) -> None:
+        for sprite in self.characters:
+            sprite.update(delta_time)
+        self.manager.update(delta_time, self.characters)
+
+    def render(self, renderer: Renderer) -> None:
+        renderer.clear(self.background_color)
+        camera_offset = getattr(self.manager, "camera_offset", (0, 0)) or (0, 0)
+
+        self.visual_tilemap.render(renderer, camera_offset=camera_offset)
+        for sprite in self.characters:
+            sprite.render(renderer, camera_offset=camera_offset)
+        self.manager.render(renderer)
+
+    def _active_sprite(self) -> CharacterMapSprite | None:
+        if getattr(self.manager, "active_sprite", None):
+            return self.manager.active_sprite
+        return self.characters[0] if self.characters else None
