@@ -40,6 +40,15 @@ class Renderer(Protocol):
         """Draw a filled rectangle."""
         raise NotImplementedError
 
+    def draw_image(
+        self,
+        image: object,
+        source_rect: tuple[int, int, int, int],
+        destination: tuple[int, int],
+    ) -> None:
+        """Blit a subsection of an image at the destination point."""
+        raise NotImplementedError
+
     def draw_text(
         self,
         text: str,
