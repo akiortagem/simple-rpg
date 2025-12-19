@@ -123,6 +123,11 @@ class CharacterSprite(Entity):
 class CollisionDetector(Protocol):
     """Strategy for querying whether a hitbox intersects impassable terrain."""
 
+    @property
+    def pixel_size(self) -> tuple[int, int]:
+        """Total size of the collidable map in pixels."""
+        ...
+
     def collides(self, hitbox: tuple[float, float, float, float]) -> bool:
         """Return ``True`` when the given hitbox overlaps blocked space."""
         ...

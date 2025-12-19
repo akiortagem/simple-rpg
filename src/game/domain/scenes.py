@@ -105,11 +105,15 @@ class MapScene(Scene):
         self._npc_sprites: list[NPCMapSprite] = [c.npc for c in self.npc_controllers if c.npc]
         self._pressed_keys: set[str] = set()
 
-        bounds = getattr(collision_tilemap, "pixel_size", None) or getattr(
-            collision_tilemap, "size", None
+        collision_detector = (
+            collision_tilemap if hasattr(collision_tilemap, "collides") else None
+        )
+        bounds_source = collision_detector or collision_tilemap
+        bounds = getattr(bounds_source, "pixel_size", None) or getattr(
+            bounds_source, "size", None
         )
         for sprite in self._all_sprites():
-            sprite.collision_detector = collision_tilemap
+            sprite.collision_detector = collision_detector
             sprite.map_bounds = bounds
 
     def on_enter(self) -> None:
