@@ -32,6 +32,11 @@ class GameLoop:
 
             self._scene_manager.handle_events(event_batch)
 
+            current_scene = self._scene_manager.current_scene
+            if current_scene is not None and current_scene.should_exit():
+                running = False
+                continue
+
             delta_time = self._clock.tick(self._target_fps)
             self._scene_manager.update(delta_time)
 

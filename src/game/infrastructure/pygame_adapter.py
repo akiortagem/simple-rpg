@@ -6,7 +6,7 @@ from typing import Sequence
 
 import pygame
 
-from ..domain.contracts import Color, EventSource, InputEvent, Renderer, TimeSource
+from ..domain.contracts import Color, EventSource, InputEvent, Key, Renderer, TimeSource
 
 
 class PygameRenderer(Renderer):
@@ -26,6 +26,23 @@ class PygameRenderer(Renderer):
     def draw_rect(self, color: Color, rect: tuple[int, int, int, int]) -> None:
         pygame.draw.rect(self._surface, color, rect)
 
+    def draw_text(
+        self,
+        text: str,
+        position: tuple[int, int],
+        color: Color,
+        font_size: int = 32,
+        center: bool = False,
+    ) -> None:
+        font = pygame.font.SysFont(None, font_size)
+        rendered = font.render(text, True, color)
+        rect = rendered.get_rect()
+        if center:
+            rect.center = position
+        else:
+            rect.topleft = position
+        self._surface.blit(rendered, rect)
+
     def present(self) -> None:
         pygame.display.flip()
 
@@ -39,12 +56,22 @@ class PygameEventSource(EventSource):
             if event.type == pygame.QUIT:
                 converted.append(InputEvent(type="QUIT"))
             elif event.type == pygame.KEYDOWN:
-                converted.append(
-                    InputEvent(type="KEYDOWN", payload={"key": event.key})
-                )
+                converted.append(InputEvent(type="KEYDOWN", payload={"key": self._translate_key(event.key)}))
             elif event.type == pygame.KEYUP:
-                converted.append(InputEvent(type="KEYUP", payload={"key": event.key}))
+                converted.append(InputEvent(type="KEYUP", payload={"key": self._translate_key(event.key)}))
         return converted
+
+    @staticmethod
+    def _translate_key(raw_key: int) -> str | int:
+        """Map pygame key constants to framework key names when possible."""
+
+        mapping = {
+            pygame.K_UP: Key.UP,
+            pygame.K_DOWN: Key.DOWN,
+            pygame.K_RETURN: Key.ENTER,
+            pygame.K_KP_ENTER: Key.ENTER,
+        }
+        return mapping.get(raw_key, raw_key)
 
 
 class PygameClock(TimeSource):

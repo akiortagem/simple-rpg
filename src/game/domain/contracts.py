@@ -16,6 +16,14 @@ class InputEvent:
     payload: dict[str, object] | None = None
 
 
+class Key:
+    """Named key constants for framework-agnostic input handling."""
+
+    UP = "UP"
+    DOWN = "DOWN"
+    ENTER = "ENTER"
+
+
 class Renderer(Protocol):
     """Abstraction for drawing to the screen."""
 
@@ -30,6 +38,17 @@ class Renderer(Protocol):
 
     def draw_rect(self, color: Color, rect: tuple[int, int, int, int]) -> None:
         """Draw a filled rectangle."""
+        raise NotImplementedError
+
+    def draw_text(
+        self,
+        text: str,
+        position: tuple[int, int],
+        color: Color,
+        font_size: int = 32,
+        center: bool = False,
+    ) -> None:
+        """Draw text anchored at the given position."""
         raise NotImplementedError
 
     def present(self) -> None:
