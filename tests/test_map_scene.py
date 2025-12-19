@@ -6,8 +6,9 @@ import pytest
 sys.path.append(os.path.abspath("."))
 
 from src.game.domain.contracts import InputEvent, Key
+from src.game.domain.npc_controller import NPCMapController
 from src.game.domain.scenes import MapScene
-from src.game.domain.sprites import CharacterMapSprite, SpriteSheetDescriptor
+from src.game.domain.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
 
 
 class FakeRenderer:
@@ -47,21 +48,28 @@ class FakeTilemap:
         return self.blocked
 
 
-class FakeManager:
-    def __init__(self, active_sprite=None, camera_offset=(0, 0)):
-        self.active_sprite = active_sprite
-        self.camera_offset = camera_offset
+class FakeController(NPCMapController):
+    def __init__(self, npc=None):
+        self.npc = npc
         self.update_calls = []
-        self.render_calls = []
+        self.interactions = []
+        self.enter_calls = 0
+        self.exit_calls = 0
 
-    def update(self, delta_time, sprites):
-        self.update_calls.append((delta_time, list(sprites)))
+    def on_enter(self):
+        self.enter_calls += 1
 
-    def render(self, renderer):
-        self.render_calls.append(renderer)
+    def on_exit(self):
+        self.exit_calls += 1
+
+    def update(self, delta_time, player):
+        self.update_calls.append((delta_time, player))
+
+    def interact(self, player):
+        self.interactions.append(player)
 
 
-class InputCapturingSprite(CharacterMapSprite):
+class InputCapturingSprite(PCMapSprite):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.last_input = None
@@ -71,7 +79,7 @@ class InputCapturingSprite(CharacterMapSprite):
         super().handle_input(pressed)
 
 
-class UpdateTrackingSprite(CharacterMapSprite):
+class UpdateTrackingSprite(PCMapSprite):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.update_calls = []
@@ -81,7 +89,7 @@ class UpdateTrackingSprite(CharacterMapSprite):
         super().update(delta_time)
 
 
-def make_sprite(cls=CharacterMapSprite, **kwargs):
+def make_sprite(cls=PCMapSprite, **kwargs):
     descriptor = SpriteSheetDescriptor(
         image="image",
         frame_width=10,
@@ -94,22 +102,24 @@ def make_sprite(cls=CharacterMapSprite, **kwargs):
 
 def test_initializes_collision_and_bounds():
     tilemap = FakeTilemap()
-    sprite = make_sprite()
-    manager = FakeManager(active_sprite=sprite)
+    player = make_sprite()
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    controller = FakeController(npc=npc)
 
-    scene = MapScene(tilemap, tilemap, [sprite], manager)
+    scene = MapScene(tilemap, tilemap, player, [controller])
 
-    assert sprite.collision_detector is tilemap
-    assert sprite.map_bounds == tilemap.pixel_size
+    assert player.collision_detector is tilemap
+    assert npc.collision_detector is tilemap
+    assert player.map_bounds == tilemap.pixel_size
     assert not scene.should_exit()
 
 
 def test_handle_events_routes_to_active_character():
     tilemap = FakeTilemap()
-    active = make_sprite(InputCapturingSprite, name="active")
-    inactive = make_sprite(InputCapturingSprite, name="inactive")
-    manager = FakeManager(active_sprite=active)
-    scene = MapScene(tilemap, tilemap, [inactive, active], manager)
+    player = make_sprite(InputCapturingSprite, name="player")
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    controller = FakeController(npc=npc)
+    scene = MapScene(tilemap, tilemap, player, [controller])
 
     events = [
         InputEvent(type="KEYDOWN", payload={"key": Key.RIGHT}),
@@ -118,49 +128,88 @@ def test_handle_events_routes_to_active_character():
 
     scene.handle_events(events)
 
-    assert active.last_input == set()
-    assert inactive.last_input is None
+    assert player.last_input == set()
 
 
 def test_update_advances_sprites_and_manager():
     tilemap = FakeTilemap()
-    sprite = make_sprite(UpdateTrackingSprite)
-    manager = FakeManager(active_sprite=sprite)
-    scene = MapScene(tilemap, tilemap, [sprite], manager)
+    player = make_sprite(UpdateTrackingSprite)
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    controller = FakeController(npc=npc)
+    scene = MapScene(tilemap, tilemap, player, [controller])
 
     scene.update(0.5)
 
-    assert sprite.update_calls == [0.5]
-    assert manager.update_calls == [(0.5, [sprite])]
+    assert player.update_calls == [0.5]
+    assert controller.update_calls == [(0.5, player)]
 
 
 def test_collision_blocks_movement_when_detector_reports_hit():
     tilemap = FakeTilemap()
     tilemap.blocked = True
-    sprite = make_sprite(InputCapturingSprite)
-    manager = FakeManager(active_sprite=sprite)
-    scene = MapScene(tilemap, tilemap, [sprite], manager)
+    player = make_sprite(InputCapturingSprite)
+    scene = MapScene(tilemap, tilemap, player)
 
     scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.RIGHT})])
     scene.update(1.0)
 
-    assert sprite.x == 0
-    assert sprite.y == 0
+    assert player.x == 0
+    assert player.y == 0
     assert tilemap.hitboxes, "Collision detector should be queried"
 
 
 def test_render_draws_tilemap_sprites_and_overlays():
     tilemap = FakeTilemap()
-    sprite = make_sprite()
-    sprite.x = 10
-    sprite.y = 20
-    manager = FakeManager(active_sprite=sprite, camera_offset=(3, 4))
+    player = make_sprite()
+    player.x = 10
+    player.y = 20
     renderer = FakeRenderer()
-    scene = MapScene(tilemap, tilemap, [sprite], manager)
+    scene = MapScene(tilemap, tilemap, player)
 
     scene.render(renderer)
 
     assert renderer.clears[-1] == scene.background_color
-    assert tilemap.render_calls == [(renderer, manager.camera_offset)]
-    assert renderer.draw_images[-1][2] == (7, 16)
-    assert manager.render_calls == [renderer]
+    assert tilemap.render_calls == [(renderer, (0, 0))]
+    assert renderer.draw_images[-1][2] == (10, 20)
+
+
+def test_handle_interaction_invokes_manager_when_facing_npc():
+    tilemap = FakeTilemap()
+    player = make_sprite(InputCapturingSprite)
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    npc.y = player.spritesheet.frame_height + 2  # directly in front of the player
+    controller = FakeController(npc=npc)
+    scene = MapScene(tilemap, tilemap, player, [controller])
+
+    scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.ENTER})])
+
+    assert controller.interactions == [player]
+
+
+def test_lifecycle_hooks_delegate_to_manager():
+    tilemap = FakeTilemap()
+    player = make_sprite()
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    controller = FakeController(npc=npc)
+    scene = MapScene(tilemap, tilemap, player, [controller])
+
+    scene.on_enter()
+    scene.on_exit()
+
+    assert controller.enter_calls == 1
+    assert controller.exit_calls == 1
+
+
+def test_interaction_requires_facing_and_range():
+    tilemap = FakeTilemap()
+    player = make_sprite(InputCapturingSprite)
+    npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
+    npc.x = player.spritesheet.frame_width + 15  # to the right but out of reach
+    controller = FakeController(npc=npc)
+    scene = MapScene(tilemap, tilemap, player, [controller])
+
+    scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.RIGHT})])
+
+    scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.ENTER})])
+
+    assert controller.interactions == []

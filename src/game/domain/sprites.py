@@ -138,29 +138,6 @@ class CharacterMapSprite(CharacterSprite):
     collision_detector: CollisionDetector | None = None
     _facing_direction: str = field(default="down", init=False)
 
-    def handle_input(self, pressed: Set[str]) -> None:
-        """Update velocity and facing based on the provided input set."""
-
-        dx = 0.0
-        dy = 0.0
-        if Key.LEFT in pressed:
-            dx -= 1
-        if Key.RIGHT in pressed:
-            dx += 1
-        if Key.UP in pressed:
-            dy -= 1
-        if Key.DOWN in pressed:
-            dy += 1
-
-        if dx or dy:
-            magnitude = (dx * dx + dy * dy) ** 0.5
-            dx /= magnitude
-            dy /= magnitude
-            self.velocity = (dx * self.speed, dy * self.speed)
-            self._facing_direction = self._direction_from_vector(dx, dy)
-        else:
-            self.velocity = (0.0, 0.0)
-
     def determine_animation_state(self) -> tuple[str, str]:
         if self.velocity != (0.0, 0.0):
             direction = self._direction_from_vector(*self.velocity)
@@ -219,3 +196,49 @@ class CharacterMapSprite(CharacterSprite):
         if abs(dy) > 0:
             return "down" if dy > 0 else "up"
         return self._facing_direction
+
+    @property
+    def facing_direction(self) -> str:
+        """Direction the character is currently facing."""
+
+        return self._facing_direction
+
+    @property
+    def hitbox(self) -> tuple[float, float, float, float]:
+        """Current hitbox of the character sprite."""
+
+        return self._hitbox(self.x, self.y)
+
+
+class PCMapSprite(CharacterMapSprite):
+    """Playable character that responds to input."""
+
+    def handle_input(self, pressed: Set[str]) -> None:
+        """Update velocity and facing based on the provided input set."""
+
+        dx = 0.0
+        dy = 0.0
+        if Key.LEFT in pressed:
+            dx -= 1
+        if Key.RIGHT in pressed:
+            dx += 1
+        if Key.UP in pressed:
+            dy -= 1
+        if Key.DOWN in pressed:
+            dy += 1
+
+        if dx or dy:
+            magnitude = (dx * dx + dy * dy) ** 0.5
+            dx /= magnitude
+            dy /= magnitude
+            self.velocity = (dx * self.speed, dy * self.speed)
+            self._facing_direction = self._direction_from_vector(dx, dy)
+        else:
+            self.velocity = (0.0, 0.0)
+
+
+class NPCMapSprite(CharacterMapSprite):
+    """Non-player character sprite that ignores direct input."""
+
+    def handle_input(self, pressed: Set[str]) -> None:  # pragma: no cover - NPCs ignore input
+        return None
