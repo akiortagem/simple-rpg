@@ -5,8 +5,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Protocol, Sequence
 
-from .contracts import Color, InputEvent, Renderer
-from .sprites import CharacterMapSprite, CollisionDetector
+from .contracts import Color, InputEvent, Key, Renderer
+from .npc_controller import NPCMapController
+from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
 
 
 class Scene(ABC):
@@ -85,19 +86,6 @@ class RenderableTilemapLayer(Protocol):
         ...
 
 
-class MapSceneManager(Protocol):
-    """Collaborator for camera logic, overlays, and NPCs within a map scene."""
-
-    active_sprite: CharacterMapSprite | None
-    camera_offset: tuple[int, int]
-
-    def update(self, delta_time: float, sprites: Sequence[CharacterMapSprite]) -> None:
-        ...
-
-    def render(self, renderer: Renderer) -> None:
-        ...
-
-
 class MapScene(Scene):
     """Tilemap-based scene coordinating characters and collisions."""
 
@@ -107,21 +95,30 @@ class MapScene(Scene):
         self,
         visual_tilemap: RenderableTilemapLayer,
         collision_tilemap: CollisionDetector | RenderableTilemapLayer,
-        characters: Sequence[CharacterMapSprite],
-        manager: MapSceneManager,
+        player: PCMapSprite,
+        npc_controllers: Sequence[NPCMapController] | None = None,
     ) -> None:
         self.visual_tilemap = visual_tilemap
         self.collision_tilemap = collision_tilemap
-        self.characters = list(characters)
-        self.manager = manager
+        self.player = player
+        self.npc_controllers = list(npc_controllers or [])
+        self._npc_sprites: list[NPCMapSprite] = [c.npc for c in self.npc_controllers if c.npc]
         self._pressed_keys: set[str] = set()
 
         bounds = getattr(collision_tilemap, "pixel_size", None) or getattr(
             collision_tilemap, "size", None
         )
-        for sprite in self.characters:
+        for sprite in self._all_sprites():
             sprite.collision_detector = collision_tilemap
             sprite.map_bounds = bounds
+
+    def on_enter(self) -> None:
+        for controller in self.npc_controllers:
+            controller.on_enter()
+
+    def on_exit(self) -> None:
+        for controller in self.npc_controllers:
+            controller.on_exit()
 
     def handle_events(self, events: Sequence[InputEvent]) -> None:
         for event in events:
@@ -137,25 +134,54 @@ class MapScene(Scene):
             elif event.type == "KEYUP" and isinstance(key, str):
                 self._pressed_keys.discard(key)
 
-        active = self._active_sprite()
-        if active:
-            active.handle_input(set(self._pressed_keys))
+        self.player.handle_input(set(self._pressed_keys))
+        if any(event.type == "KEYDOWN" and event.payload and event.payload.get("key") == Key.ENTER for event in events):
+            controller = self._find_interactable_controller()
+            if controller:
+                controller.interact(self.player)
 
     def update(self, delta_time: float) -> None:
-        for sprite in self.characters:
+        for controller in self.npc_controllers:
+            controller.update(delta_time, self.player)
+        for sprite in self._all_sprites():
             sprite.update(delta_time)
-        self.manager.update(delta_time, self.characters)
 
     def render(self, renderer: Renderer) -> None:
         renderer.clear(self.background_color)
-        camera_offset = getattr(self.manager, "camera_offset", (0, 0)) or (0, 0)
+        camera_offset = (0, 0)
 
         self.visual_tilemap.render(renderer, camera_offset=camera_offset)
-        for sprite in self.characters:
+        for sprite in self._all_sprites():
             sprite.render(renderer, camera_offset=camera_offset)
-        self.manager.render(renderer)
 
-    def _active_sprite(self) -> CharacterMapSprite | None:
-        if getattr(self.manager, "active_sprite", None):
-            return self.manager.active_sprite
-        return self.characters[0] if self.characters else None
+    def _all_sprites(self) -> list[PCMapSprite | NPCMapSprite]:
+        return [self.player, *self._npc_sprites]
+
+    def _find_interactable_controller(self) -> NPCMapController | None:
+        player_hitbox = self.player.hitbox
+        reach = max(self.player.spritesheet.frame_width, self.player.spritesheet.frame_height) * 0.5
+        x, y, width, height = player_hitbox
+
+        if self.player.facing_direction == "left":
+            zone = (x - reach, y, reach, height)
+        elif self.player.facing_direction == "right":
+            zone = (x + width, y, reach, height)
+        elif self.player.facing_direction == "up":
+            zone = (x, y - reach, width, reach)
+        else:  # down
+            zone = (x, y + height, width, reach)
+
+        for controller in self.npc_controllers:
+            if controller.npc is None:
+                continue
+            npc_hitbox = controller.npc.hitbox
+            if _intersects(zone, npc_hitbox):
+                return controller
+
+        return None
+
+
+def _intersects(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    return not (ax + aw <= bx or bx + bw <= ax or ay + ah <= by or by + bh <= ay)
