@@ -5,11 +5,20 @@ A simple rpg engine made in pygame with a lightweight clean architecture scaffol
 ## Getting Started
 
 1. Install dependencies (e.g., `pip install pygame`).
-2. Run the game entry point:
+2. Import the `build_game` helper and provide your own scenes to start a loop:
 
-```bash
-python -m src.main
+```python
+from src.main import build_game
+from src.game.domain.scenes import Scene
+
+class MyScene(Scene):
+    ...
+
+game = build_game(initial_scene=MyScene())
+game.run()
 ```
+
+An example intro menu is available in [`example/intro_ui`](example/intro_ui). Run it with `python -m example.intro_ui.main` to see how to compose scenes and bootstrap the loop.
 
 ## Architecture
 

@@ -1,4 +1,4 @@
-"""Entry point for the Simple RPG Pygame application."""
+"""Convenience helpers for wiring up Simple RPG with pygame infrastructure."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import pygame
 
 from src.game.application.game_loop import GameLoop
 from src.game.application.scene_manager import SceneManager
-from src.game.domain.scenes import DemoScene
+from src.game.domain.scenes import DemoScene, Scene
 from src.game.infrastructure.pygame_adapter import (
     PygameClock,
     PygameEventSource,
@@ -14,26 +14,31 @@ from src.game.infrastructure.pygame_adapter import (
 )
 
 
-def build_game(width: int = 800, height: int = 600, title: str = "Simple RPG") -> GameLoop:
-    """Wire up the game loop with pygame infrastructure."""
+def build_game(
+    width: int = 800,
+    height: int = 600,
+    title: str = "Simple RPG",
+    initial_scene: Scene | None = None,
+) -> GameLoop:
+    """Wire up the game loop with pygame infrastructure.
+
+    Parameters
+    ----------
+    width: int
+        Desired window width in pixels.
+    height: int
+        Desired window height in pixels.
+    title: str
+        Title for the pygame window caption.
+    initial_scene: Scene | None
+        The scene to show when the loop starts. If omitted, ``DemoScene``
+        will be used as a placeholder.
+    """
     pygame.init()
 
     renderer = PygameRenderer((width, height), title)
     events = PygameEventSource()
     clock = PygameClock()
 
-    scene_manager = SceneManager(DemoScene())
+    scene_manager = SceneManager(initial_scene or DemoScene())
     return GameLoop(scene_manager=scene_manager, renderer=renderer, events=events, clock=clock)
-
-
-def main() -> None:
-    """Initialize the game and run the cleanly-structured loop."""
-    game = build_game()
-    try:
-        game.run()
-    finally:
-        pygame.quit()
-
-
-if __name__ == "__main__":
-    main()

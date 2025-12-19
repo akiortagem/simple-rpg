@@ -16,6 +16,17 @@ class Scene(ABC):
     """
 
     background_color: Color = (0, 0, 0)
+    _exit_requested: bool = False
+
+    def request_exit(self) -> None:
+        """Ask the game loop to end after the current frame."""
+
+        self._exit_requested = True
+
+    def should_exit(self) -> bool:
+        """Return whether the scene asked to stop the loop."""
+
+        return self._exit_requested
 
     def on_enter(self) -> None:
         """Hook called when the scene becomes active."""
