@@ -181,7 +181,7 @@ class CharacterMapSprite(CharacterSprite):
         target_y = self.y + self.velocity[1] * delta_time
 
         self.x = self._resolve_axis_move(target_x, self.y, axis="x")
-        self.y = self._resolve_axis_move(self.x, target_y, axis="y")
+        self.y = self._resolve_axis_move(target_y, self.x, axis="y")
 
     def _resolve_axis_move(self, proposed_primary: float, secondary: float, axis: str) -> float:
         width = self.spritesheet.frame_width
