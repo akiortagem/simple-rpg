@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from .domain.scenes import DemoScene, Scene
+from .domain.scenes import DemoScene, MapScene, Scene
 
-__all__ = ["Scene", "DemoScene"]
+__all__ = ["Scene", "DemoScene", "MapScene"]

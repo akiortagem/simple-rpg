@@ -42,7 +42,7 @@ class SpriteSheetDescriptor:
     animations: AnimationMap | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CharacterSprite(Entity):
     """Animated character sprite that can render frames from a spritesheet."""
 
@@ -128,7 +128,7 @@ class CollisionDetector(Protocol):
         ...
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CharacterMapSprite(CharacterSprite):
     """A character sprite aware of map bounds and collision layers."""
 
