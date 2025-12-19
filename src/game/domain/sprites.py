@@ -9,9 +9,9 @@ the right before wrapping to the next row.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Protocol, Set, Tuple
 
-from .contracts import Renderer
+from .contracts import Key, Renderer
 from .entities import Entity
 
 AnimationMap = Dict[str, Dict[str, List[int]]]
@@ -118,3 +118,104 @@ class CharacterSprite(Entity):
             self.spritesheet.frame_width,
             self.spritesheet.frame_height,
         )
+
+
+class CollisionDetector(Protocol):
+    """Strategy for querying whether a hitbox intersects impassable terrain."""
+
+    def collides(self, hitbox: tuple[float, float, float, float]) -> bool:
+        """Return ``True`` when the given hitbox overlaps blocked space."""
+        ...
+
+
+@dataclass
+class CharacterMapSprite(CharacterSprite):
+    """A character sprite aware of map bounds and collision layers."""
+
+    speed: float = 120.0
+    velocity: tuple[float, float] = (0.0, 0.0)
+    map_bounds: tuple[int, int] | None = None
+    collision_detector: CollisionDetector | None = None
+    _facing_direction: str = field(default="down", init=False)
+
+    def handle_input(self, pressed: Set[str]) -> None:
+        """Update velocity and facing based on the provided input set."""
+
+        dx = 0.0
+        dy = 0.0
+        if Key.LEFT in pressed:
+            dx -= 1
+        if Key.RIGHT in pressed:
+            dx += 1
+        if Key.UP in pressed:
+            dy -= 1
+        if Key.DOWN in pressed:
+            dy += 1
+
+        if dx or dy:
+            magnitude = (dx * dx + dy * dy) ** 0.5
+            dx /= magnitude
+            dy /= magnitude
+            self.velocity = (dx * self.speed, dy * self.speed)
+            self._facing_direction = self._direction_from_vector(dx, dy)
+        else:
+            self.velocity = (0.0, 0.0)
+
+    def determine_animation_state(self) -> tuple[str, str]:
+        if self.velocity != (0.0, 0.0):
+            direction = self._direction_from_vector(*self.velocity)
+            self._facing_direction = direction
+            return "walk", direction
+        return "idle", self._facing_direction
+
+    def update(self, delta_time: float) -> None:
+        self._integrate_velocity(delta_time)
+        super().update(delta_time)
+
+    # Movement helpers ----------------------------------------------------
+    def _integrate_velocity(self, delta_time: float) -> None:
+        if delta_time <= 0 or self.velocity == (0.0, 0.0):
+            return
+
+        target_x = self.x + self.velocity[0] * delta_time
+        target_y = self.y + self.velocity[1] * delta_time
+
+        self.x = self._resolve_axis_move(target_x, self.y, axis="x")
+        self.y = self._resolve_axis_move(target_y, self.x, axis="y")
+
+    def _resolve_axis_move(self, proposed_primary: float, secondary: float, axis: str) -> float:
+        width = self.spritesheet.frame_width
+        height = self.spritesheet.frame_height
+        primary_size = width if axis == "x" else height
+
+        clamped = self._clamp_to_bounds(proposed_primary, primary_size, axis)
+        hitbox = self._hitbox(clamped if axis == "x" else self.x, secondary if axis == "x" else clamped)
+        if self._collides(hitbox):
+            return self.x if axis == "x" else self.y
+        return clamped
+
+    def _clamp_to_bounds(self, proposed: float, size: float, axis: str) -> float:
+        if not self.map_bounds:
+            return proposed
+        limit = self.map_bounds[0] if axis == "x" else self.map_bounds[1]
+        return max(0.0, min(proposed, max(limit - size, 0.0)))
+
+    def _collides(self, hitbox: tuple[float, float, float, float]) -> bool:
+        if self.collision_detector is None:
+            return False
+        return self.collision_detector.collides(hitbox)
+
+    def _hitbox(self, x: float, y: float) -> tuple[float, float, float, float]:
+        return (
+            x,
+            y,
+            float(self.spritesheet.frame_width),
+            float(self.spritesheet.frame_height),
+        )
+
+    def _direction_from_vector(self, dx: float, dy: float) -> str:
+        if abs(dx) > abs(dy):
+            return "right" if dx > 0 else "left"
+        if abs(dy) > 0:
+            return "down" if dy > 0 else "up"
+        return self._facing_direction
