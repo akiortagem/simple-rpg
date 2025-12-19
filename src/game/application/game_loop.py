@@ -1,0 +1,39 @@
+"""Application-level game loop orchestrating domain and infrastructure."""
+
+from __future__ import annotations
+
+from ..domain.contracts import EventSource, Renderer, TimeSource
+from .scene_manager import SceneManager
+
+
+class GameLoop:
+    """Central loop that wires together input, domain logic, and rendering."""
+
+    def __init__(
+        self,
+        scene_manager: SceneManager,
+        renderer: Renderer,
+        events: EventSource,
+        clock: TimeSource,
+        target_fps: int = 60,
+    ) -> None:
+        self._scene_manager = scene_manager
+        self._renderer = renderer
+        self._events = events
+        self._clock = clock
+        self._target_fps = target_fps
+
+    def run(self) -> None:
+        running = True
+        while running:
+            event_batch = self._events.poll()
+            if any(event.type == "QUIT" for event in event_batch):
+                running = False
+
+            self._scene_manager.handle_events(event_batch)
+
+            delta_time = self._clock.tick(self._target_fps)
+            self._scene_manager.update(delta_time)
+
+            self._scene_manager.render(self._renderer)
+            self._renderer.present()
