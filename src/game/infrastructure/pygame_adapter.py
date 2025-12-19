@@ -78,6 +78,8 @@ class PygameEventSource(EventSource):
         mapping = {
             pygame.K_UP: Key.UP,
             pygame.K_DOWN: Key.DOWN,
+            pygame.K_LEFT: Key.LEFT,
+            pygame.K_RIGHT: Key.RIGHT,
             pygame.K_RETURN: Key.ENTER,
             pygame.K_KP_ENTER: Key.ENTER,
         }

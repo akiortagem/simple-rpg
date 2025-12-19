@@ -21,6 +21,8 @@ class Key:
 
     UP = "UP"
     DOWN = "DOWN"
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
     ENTER = "ENTER"
 
 
