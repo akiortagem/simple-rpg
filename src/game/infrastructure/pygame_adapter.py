@@ -43,6 +43,16 @@ class PygameRenderer(Renderer):
             rect.topleft = position
         self._surface.blit(rendered, rect)
 
+    def draw_image(
+        self,
+        image: pygame.Surface,
+        source_rect: tuple[int, int, int, int],
+        destination: tuple[int, int],
+    ) -> None:
+        """Draw a subsection of an image onto the main surface."""
+
+        self._surface.blit(image, destination, source_rect)
+
     def present(self) -> None:
         pygame.display.flip()
 
