@@ -61,3 +61,7 @@ scene = MapScene(
 ```
 
 `MapScene` will route input to the player, update all sprites and controllers, and render the tilemap followed by every sprite each frame.
+
+## Camera and scrolling
+
+`MapScene` keeps a camera that follows the player's hitbox and clamps itself to the map bounds before rendering. The renderer's size determines how much of the map is visible at once, so the viewport stays fixed while the tilemap and sprites scroll underneath. Developers can pan the view without dealing with renderer math by calling `scene.pan_camera(dx, dy)` or apply a sequence of moves at once with `scene.pan_camera_route([(dx, dy), ...])`; the offset persists across frames and stacks with the automatic player tracking.

@@ -34,8 +34,8 @@ class FakeRenderer:
 
 
 class FakeTilemap:
-    def __init__(self):
-        self.pixel_size = (100, 100)
+    def __init__(self, pixel_size=(100, 100)):
+        self.pixel_size = pixel_size
         self.render_calls = []
         self.blocked = False
         self.hitboxes = []
@@ -171,6 +171,52 @@ def test_render_draws_tilemap_sprites_and_overlays():
     assert renderer.clears[-1] == scene.background_color
     assert tilemap.render_calls == [(renderer, (0, 0))]
     assert renderer.draw_images[-1][2] == (10, 20)
+
+
+def test_camera_follows_player_and_clamps_to_bounds():
+    tilemap = FakeTilemap(pixel_size=(640, 480))
+    player = make_sprite()
+    player.x = 200
+    player.y = 150
+    renderer = FakeRenderer()
+    scene = MapScene(tilemap, tilemap, player)
+
+    scene.render(renderer)
+
+    assert tilemap.render_calls[-1][1] == (45, 35)
+    assert renderer.draw_images[-1][2] == (155, 115)
+
+
+def test_pan_camera_shifts_view_without_exposing_renderer():
+    tilemap = FakeTilemap(pixel_size=(640, 480))
+    player = make_sprite()
+    player.x = 200
+    player.y = 150
+    renderer = FakeRenderer()
+    scene = MapScene(tilemap, tilemap, player)
+
+    scene.render(renderer)
+    scene.pan_camera(50, -20)
+    scene.render(renderer)
+
+    assert tilemap.render_calls[-1][1] == (95, 15)
+    assert renderer.draw_images[-1][2] == (105, 135)
+
+
+def test_pan_camera_route_applies_multiple_steps_and_clamps():
+    tilemap = FakeTilemap(pixel_size=(640, 480))
+    player = make_sprite()
+    player.x = 200
+    player.y = 150
+    renderer = FakeRenderer()
+    scene = MapScene(tilemap, tilemap, player)
+
+    scene.render(renderer)
+    scene.pan_camera_route([(100, 0), (500, 0), (-50, -100)])
+    scene.render(renderer)
+
+    assert tilemap.render_calls[-1][1] == (320, 0)
+    assert renderer.draw_images[-1][2] == (-120, 150)
 
 
 def test_handle_interaction_invokes_manager_when_facing_npc():
