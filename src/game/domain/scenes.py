@@ -86,6 +86,67 @@ class RenderableTilemapLayer(Protocol):
         ...
 
 
+class MapCamera:
+    """Camera that tracks a target and allows manual panning."""
+
+    def __init__(self, map_size: tuple[int, int] | None = None) -> None:
+        self.map_size = map_size
+        self.view_size: tuple[int, int] | None = None
+        self._manual_offset: tuple[float, float] = (0.0, 0.0)
+        self._position: tuple[float, float] = (0.0, 0.0)
+
+    @property
+    def offset(self) -> tuple[int, int]:
+        return int(self._position[0]), int(self._position[1])
+
+    def set_map_size(self, map_size: tuple[int, int] | None) -> None:
+        self.map_size = map_size
+        self._clamp_to_bounds()
+
+    def set_view_size(self, view_size: tuple[int, int]) -> None:
+        self.view_size = view_size
+        self._clamp_to_bounds()
+
+    def pan(self, dx: float, dy: float) -> None:
+        self._manual_offset = (
+            self._manual_offset[0] + dx,
+            self._manual_offset[1] + dy,
+        )
+        self._position = (
+            self._position[0] + dx,
+            self._position[1] + dy,
+        )
+        self._clamp_to_bounds()
+
+    def pan_route(self, deltas: Sequence[tuple[float, float]]) -> None:
+        """Follow a series of pan deltas while respecting map bounds."""
+
+        for dx, dy in deltas:
+            self.pan(dx, dy)
+
+    def follow(self, target_hitbox: tuple[float, float, float, float]) -> None:
+        if not self.view_size:
+            return
+
+        tx, ty, tw, th = target_hitbox
+        desired_x = tx + tw * 0.5 - self.view_size[0] * 0.5 + self._manual_offset[0]
+        desired_y = ty + th * 0.5 - self.view_size[1] * 0.5 + self._manual_offset[1]
+
+        self._position = (desired_x, desired_y)
+        self._clamp_to_bounds()
+
+    def _clamp_to_bounds(self) -> None:
+        if not self.map_size or not self.view_size:
+            return
+
+        max_x = max(self.map_size[0] - self.view_size[0], 0)
+        max_y = max(self.map_size[1] - self.view_size[1], 0)
+
+        clamped_x = min(max(self._position[0], 0.0), max_x)
+        clamped_y = min(max(self._position[1], 0.0), max_y)
+        self._position = (clamped_x, clamped_y)
+
+
 class MapScene(Scene):
     """Tilemap-based scene coordinating characters and collisions."""
 
@@ -104,6 +165,7 @@ class MapScene(Scene):
         self.npc_controllers = list(npc_controllers or [])
         self._npc_sprites: list[NPCMapSprite] = [c.npc for c in self.npc_controllers if c.npc]
         self._pressed_keys: set[str] = set()
+        self.camera = MapCamera()
 
         collision_detector = (
             collision_tilemap if hasattr(collision_tilemap, "collides") else None
@@ -112,6 +174,7 @@ class MapScene(Scene):
         bounds = getattr(bounds_source, "pixel_size", None) or getattr(
             bounds_source, "size", None
         )
+        self.camera.set_map_size(bounds)
         for sprite in self._all_sprites():
             sprite.collision_detector = collision_detector
             sprite.map_bounds = bounds
@@ -152,11 +215,23 @@ class MapScene(Scene):
 
     def render(self, renderer: Renderer) -> None:
         renderer.clear(self.background_color)
-        camera_offset = (0, 0)
+        self.camera.set_view_size(renderer.size)
+        self.camera.follow(self.player.hitbox)
+        camera_offset = self.camera.offset
 
         self.visual_tilemap.render(renderer, camera_offset=camera_offset)
         for sprite in self._all_sprites():
             sprite.render(renderer, camera_offset=camera_offset)
+
+    def pan_camera(self, dx: float, dy: float) -> None:
+        """Shift the camera by the given delta without exposing renderer details."""
+
+        self.camera.pan(dx, dy)
+
+    def pan_camera_route(self, deltas: Sequence[tuple[float, float]]) -> None:
+        """Apply a sequence of camera deltas in one call."""
+
+        self.camera.pan_route(deltas)
 
     def _all_sprites(self) -> list[PCMapSprite | NPCMapSprite]:
         return [self.player, *self._npc_sprites]
