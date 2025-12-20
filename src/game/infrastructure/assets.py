@@ -20,7 +20,13 @@ def load_image(
 
     asset_path = Path(path)
     if asset_path.exists():
-        return pygame.image.load(asset_path).convert_alpha()
+        image = pygame.image.load(asset_path)
+
+        display_surface = pygame.display.get_surface()
+        if display_surface is not None:
+            return image.convert_alpha()
+
+        return image
 
     surface = pygame.Surface(fallback_size, pygame.SRCALPHA)
     surface.fill(fallback_color)
