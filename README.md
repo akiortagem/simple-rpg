@@ -20,6 +20,10 @@ game.run()
 
 An example intro menu is available in [`example/intro_ui`](example/intro_ui). Run it with `python -m example.intro_ui.main` to see how to compose scenes and bootstrap the loop.
 
+## Documentation
+
+New to the engine? Start with the guides in [`docs/`](docs/index.md) for setup, tilemap scenes, sprites, tilesets, and running the game loop.
+
 ## Architecture
 
 The project is structured to keep domain logic independent from Pygame:
