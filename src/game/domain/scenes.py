@@ -8,6 +8,15 @@ from typing import Protocol, Sequence
 from .contracts import Color, InputEvent, Key, Renderer
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
+from .ui import (
+    Border,
+    Container,
+    LayoutNode,
+    MenuChoice,
+    Rect,
+    Text,
+    UIElement,
+)
 
 
 class Scene(ABC):
@@ -49,6 +58,92 @@ class Scene(ABC):
     @abstractmethod
     def render(self, renderer: Renderer) -> None:
         """Issue rendering commands through the provided renderer."""
+
+
+class UIRenderer:
+    """Render UI layout trees into renderer draw calls."""
+
+    def render(self, renderer: Renderer, layout: LayoutNode) -> None:
+        self._render_node(renderer, layout)
+
+    def _render_node(self, renderer: Renderer, node: LayoutNode) -> None:
+        element = node.element
+        if isinstance(element, Container):
+            self._render_container(renderer, node.rect, element)
+        elif isinstance(element, Border):
+            self._render_border(renderer, node.rect, element)
+        elif isinstance(element, Text):
+            self._render_text(renderer, node.rect, element)
+        elif isinstance(element, MenuChoice):
+            self._render_menu_choice(renderer, node.rect, element)
+        for child in node.children:
+            self._render_node(renderer, child)
+
+    def _render_container(
+        self, renderer: Renderer, rect: Rect, container: Container
+    ) -> None:
+        renderer.draw_rect(
+            container.background_color, (rect.x, rect.y, rect.width, rect.height)
+        )
+
+    def _render_border(self, renderer: Renderer, rect: Rect, border: Border) -> None:
+        width = min(border.width, rect.width, rect.height)
+        if width <= 0:
+            return
+        renderer.draw_rect(border.color, (rect.x, rect.y, rect.width, width))
+        renderer.draw_rect(
+            border.color,
+            (rect.x, rect.y + rect.height - width, rect.width, width),
+        )
+        renderer.draw_rect(border.color, (rect.x, rect.y, width, rect.height))
+        renderer.draw_rect(
+            border.color,
+            (rect.x + rect.width - width, rect.y, width, rect.height),
+        )
+
+    def _render_text(self, renderer: Renderer, rect: Rect, text: Text) -> None:
+        renderer.draw_text(
+            text.content,
+            (rect.x, rect.y),
+            text.color,
+            font_size=text.size,
+            center=text.center,
+        )
+
+    def _render_menu_choice(
+        self, renderer: Renderer, rect: Rect, choice: MenuChoice
+    ) -> None:
+        renderer.draw_text(
+            choice.display_label,
+            (rect.x, rect.y),
+            choice.display_color,
+            font_size=choice.size,
+            center=choice.center,
+        )
+
+
+class UIScene(Scene):
+    """Scene base class for declarative UI layouts."""
+
+    background_color: Color = (0, 0, 0)
+
+    def __init__(self) -> None:
+        self.screen_size = (0, 0)
+        self._ui_renderer = UIRenderer()
+
+    @abstractmethod
+    def build(self) -> UIElement:
+        """Return the root UI element for the scene."""
+
+    def update(self, delta_time: float) -> None:
+        return None
+
+    def render(self, renderer: Renderer) -> None:
+        self.screen_size = renderer.size
+        renderer.clear(self.background_color)
+        root = self.build()
+        layout = root.layout(Rect(0, 0, self.screen_size[0], self.screen_size[1]))
+        self._ui_renderer.render(renderer, layout)
 
 
 class DemoScene(Scene):
