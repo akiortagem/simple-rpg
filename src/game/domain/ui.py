@@ -183,6 +183,8 @@ class Menu:
     def selected_choice(self) -> MenuChoice | None:
         if not self.choices:
             return None
+        if self.selected_index < 0 or self.selected_index >= len(self.choices):
+            return None
         return self.choices[self.selected_index]
 
     def activate(self) -> None:
