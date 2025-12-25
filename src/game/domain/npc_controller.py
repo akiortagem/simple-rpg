@@ -45,7 +45,14 @@ class NPCController:
 
     def __post_init__(self) -> None:
         spritesheet = self.actor.spritesheet.to_descriptor()
-        self.npc = NPCMapSprite(x=0.0, y=0.0, spritesheet=spritesheet, speed=self.speed)
+        name = getattr(self.actor, "name", self.actor.__class__.__name__)
+        self.npc = NPCMapSprite(
+            name=name,
+            x=0.0,
+            y=0.0,
+            spritesheet=spritesheet,
+            speed=self.speed,
+        )
 
     def on_enter(self) -> None:
         self._current_index = 0
