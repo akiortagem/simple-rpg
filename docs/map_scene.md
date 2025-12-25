@@ -5,6 +5,7 @@ The `MapScene` class orchestrates tile layers, collision detection, and characte
 ```python
 from src.game.domain.scenes import MapScene
 from src.game.domain.tilemap_layer import TilemapLayer, TilesetDescriptor
+from src.game.domain.tilemap_parser import parse_tilemap
 from src.game.domain.tilemap import Tilemap, TileCollisionDetector
 from src.game.domain.sprites import PCMapSprite, SpriteSheetDescriptor
 ```
@@ -29,11 +30,13 @@ tileset = TilesetDescriptor(
     columns=8,
 )
 
-# Rows of tile IDs that reference the tileset grid; None entries skip drawing.
-tile_rows = [
-    [0, 1, 1, 2],
-    [8, 9, 9, 10],
-]
+# Rows of tile IDs that reference the tileset grid; use 1-based IDs for visuals.
+tile_rows = parse_tilemap(
+    tilemap=\"\"\"
+    1 2 2 3
+    9 10 10 11
+    \"\"\"
+)
 
 visual_layer = TilemapLayer(tileset=tileset, tiles=tile_rows)
 ```
@@ -42,7 +45,7 @@ visual_layer = TilemapLayer(tileset=tileset, tiles=tile_rows)
 
 ```python
 collision_map = Tilemap(
-    tiles=tile_rows,  # You can share the same layout or load a separate collision-only grid
+    tiles=parse_tilemap(tilemap_file=\"assets/collision_map.txt\", collision=True),
     tile_size=(tileset.tile_width, tileset.tile_height),
     impassable_ids={1, 9},
 )
