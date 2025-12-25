@@ -8,7 +8,7 @@ from typing import Protocol, Sequence
 from .contracts import Color, InputEvent, Key, Renderer
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
-from .ui import (
+from .ui_kit import (
     Border,
     Container,
     LayoutNode,

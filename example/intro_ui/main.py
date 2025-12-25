@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from src.game.domain.contracts import Color
 from src.game.domain.scenes import UIScene
-from src.game.domain.ui import Border, Column, Container, Menu, MenuChoice, Spacing, Text, UIElement
+from src.game.domain.ui_kit import *
 from src.main import build_game
 
 
