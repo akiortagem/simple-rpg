@@ -2,69 +2,93 @@
 
 from __future__ import annotations
 
-from typing import Sequence
-
-from src.game.domain.contracts import Color, InputEvent, Key, Renderer
-from src.game.domain.scenes import Scene
+from src.game.domain.contracts import Color
+from src.game.domain.scenes import UIScene
+from src.game.domain.ui import Border, Column, Container, Menu, MenuChoice, Spacing, Text, UIElement
 from src.main import build_game
 
 
-class IntroScene(Scene):
+class IntroScene(UIScene):
     """Intro UI showing common menu options."""
 
     background_color: Color = (12, 14, 28)
 
     def __init__(self) -> None:
-        self._options = ["New Game", "Load Game", "Exit"]
+        super().__init__()
+        self._options = ("New Game", "Load Game", "Exit")
         self._selected_index = 0
         self._subtitle = "Use ↑/↓ and Enter to choose an option."
-        self._elapsed = 0.0
 
-    def handle_events(self, events: Sequence[InputEvent]) -> None:
-        for event in events:
-            if event.type != "KEYDOWN" or event.payload is None:
-                continue
+    def build(self) -> UIElement:
+        return Container(
+            background_color=self.background_color,
+            border=Border(color=(32, 40, 68), width=2),
+            content=Column(
+                contents=(
+                    Spacing(48),
+                    Text(
+                        "Simple RPG",
+                        color=(235, 239, 255),
+                        size=48,
+                        center=True,
+                    ),
+                    Text(
+                        self._subtitle,
+                        color=(190, 198, 255),
+                        size=24,
+                        center=True,
+                    ),
+                    Spacing(32),
+                    Menu(
+                        choices=(
+                            MenuChoice(
+                                "New Game",
+                                value="new",
+                                on_select=self._update_subtitle,
+                                color=(240, 244, 255),
+                                selected_color=(240, 244, 255),
+                                highlight_color=(60, 80, 140),
+                                size=36,
+                                center=True,
+                            ),
+                            MenuChoice(
+                                "Load Game",
+                                value="load",
+                                on_select=self._update_subtitle,
+                                color=(240, 244, 255),
+                                selected_color=(240, 244, 255),
+                                highlight_color=(60, 80, 140),
+                                size=36,
+                                center=True,
+                            ),
+                            MenuChoice(
+                                "Exit",
+                                value="exit",
+                                on_select=self._update_subtitle,
+                                color=(240, 244, 255),
+                                selected_color=(240, 244, 255),
+                                highlight_color=(60, 80, 140),
+                                size=36,
+                                center=True,
+                            ),
+                        ),
+                        spacing=12,
+                        selected_index=self._selected_index,
+                        on_choose=self._handle_choice,
+                    ),
+                ),
+                spacing=16,
+            ),
+        )
 
-            key = event.payload.get("key")
-            if key == Key.UP:
-                self._selected_index = (self._selected_index - 1) % len(self._options)
-            elif key == Key.DOWN:
-                self._selected_index = (self._selected_index + 1) % len(self._options)
-            elif key == Key.ENTER:
-                self._activate_option()
+    def _update_subtitle(self, choice: MenuChoice) -> None:
+        self._subtitle = f"{choice.label} selected - swap in your own scene next!"
+        if choice.label in self._options:
+            self._selected_index = self._options.index(choice.label)
 
-    def update(self, delta_time: float) -> None:
-        self._elapsed += delta_time
-
-    def render(self, renderer: Renderer) -> None:
-        renderer.clear(self.background_color)
-        width, height = renderer.size
-
-        renderer.draw_text("Simple RPG", (width // 2, height // 4), (235, 239, 255), 48, center=True)
-        renderer.draw_text(self._subtitle, (width // 2, height // 4 + 48), (190, 198, 255), 24, center=True)
-
-        start_y = height // 2 - (len(self._options) * 30)
-        for index, option in enumerate(self._options):
-            y = start_y + index * 60
-            is_selected = index == self._selected_index
-
-            if is_selected:
-                pulse = (abs(((self._elapsed % 1.5) / 1.5) - 0.5) * 2)
-                highlight = (
-                    int(60 + 40 * pulse),
-                    int(80 + 40 * pulse),
-                    int(140 + 60 * pulse),
-                )
-                renderer.draw_rect(highlight, (width // 2 - 200, y - 10, 400, 50))
-
-            renderer.draw_text(option, (width // 2, y), (240, 244, 255), 36, center=True)
-
-    def _activate_option(self) -> None:
-        choice = self._options[self._selected_index]
-        if choice == "Exit":
+    def _handle_choice(self, value: str | None) -> None:
+        if value == "exit":
             self.request_exit()
-        else:
-            self._subtitle = f"{choice} selected - swap in your own scene next!"
 
 
 def main() -> None:
