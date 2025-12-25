@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Protocol, Sequence
 
 from .contracts import Color, InputEvent, Key, Renderer
+from .map_scene_declarative import Map, build_map_scene_assets
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
 from .ui_kit import (
@@ -380,6 +381,24 @@ class MapScene(Scene):
                 return controller
 
         return None
+
+
+class MapSceneBase(MapScene, ABC):
+    """Declarative map scene base that builds map assets from definitions."""
+
+    @abstractmethod
+    def build(self) -> Map:
+        """Return the declarative map definition for this scene."""
+
+    def __init__(self) -> None:
+        definition = self.build()
+        assets = build_map_scene_assets(definition)
+        super().__init__(
+            visual_tilemap=assets.visual_tilemap,
+            collision_tilemap=assets.collision_tilemap,
+            player=assets.player,
+            npc_controllers=assets.npc_controllers,
+        )
 
 
 def _intersects(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
