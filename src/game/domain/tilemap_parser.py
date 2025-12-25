@@ -50,7 +50,7 @@ def parse_tilemap(
     if collision:
         return rows
 
-    return [[value - 1 if value > 0 else value for value in row] for row in rows]
+    return [[value - 1 if value > 0 else -1 for value in row] for row in rows]
 
 
 def _parse_rows(tilemap: str) -> list[list[int]]:
