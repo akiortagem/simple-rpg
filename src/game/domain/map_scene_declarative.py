@@ -124,6 +124,7 @@ def _build_player(definition: MapPC) -> PCMapSprite:
     player = definition.pc(definition.sprite)
     if not isinstance(player, PCMapSprite):
         raise TypeError("pc must construct a PCMapSprite instance")
+    player.x, player.y = definition.starting
     return player
 
 
@@ -131,4 +132,7 @@ def _build_npc_controller(definition: MapNPC) -> NPCController:
     controller = definition.npc(definition.sprite)
     if not isinstance(controller, NPCController):
         raise TypeError("npc must construct an NPCController instance")
+    if controller.npc is None:
+        raise TypeError("npc must construct an NPCController with an NPCMapSprite")
+    controller.npc.x, controller.npc.y = definition.starting
     return controller
