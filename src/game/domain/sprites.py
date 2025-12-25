@@ -9,12 +9,209 @@ the right before wrapping to the next row.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Protocol, Set, Tuple
+from pathlib import Path
+from typing import Dict, List, Mapping, Protocol, Sequence, Set, Tuple
 
 from .contracts import Key, Renderer
 from .entities import Entity
 
 AnimationMap = Dict[str, Dict[str, List[int]]]
+DEFAULT_DIRECTION_ORDER = ("down", "left", "right", "up")
+
+
+def normalize_animation_map(
+    actions: Mapping[str, object],
+    *,
+    directions: Sequence[str] = DEFAULT_DIRECTION_ORDER,
+    one_indexed: bool = False,
+    sheet_size: tuple[int, int] | None = None,
+) -> AnimationMap:
+    """Normalize animation definitions into a frame index map.
+
+    Args:
+        actions: Mapping of action names to direction mappings or ordered
+            direction lists. Direction lists are interpreted using
+            ``directions`` ordering.
+        directions: Direction order used when animations are declared as
+            ordered lists.
+        one_indexed: Whether the incoming frame IDs are 1-based.
+        sheet_size: ``(columns, rows)`` in frames. Required when ``one_indexed``
+            is ``True`` so validation can occur.
+    """
+
+    if one_indexed and sheet_size is None:
+        raise ValueError("sheet_size is required when using 1-based tile IDs.")
+
+    max_tile_id = None
+    if sheet_size is not None:
+        columns, rows = sheet_size
+        if columns <= 0 or rows <= 0:
+            raise ValueError("sheet_size must contain positive column/row counts.")
+        max_tile_id = columns * rows
+
+    normalized: AnimationMap = {}
+    for action, raw_directions in actions.items():
+        normalized[action] = _normalize_action(
+            raw_directions,
+            directions=directions,
+            one_indexed=one_indexed,
+            max_tile_id=max_tile_id,
+            action=action,
+        )
+    return normalized
+
+
+def _normalize_action(
+    raw_directions: object,
+    *,
+    directions: Sequence[str],
+    one_indexed: bool,
+    max_tile_id: int | None,
+    action: str,
+) -> Dict[str, List[int]]:
+    if isinstance(raw_directions, Mapping):
+        return {
+            direction: _normalize_frames(
+                frames,
+                one_indexed=one_indexed,
+                max_tile_id=max_tile_id,
+                action=action,
+                direction=direction,
+            )
+            for direction, frames in raw_directions.items()
+        }
+
+    if _is_sequence(raw_directions):
+        if _is_int_sequence(raw_directions):
+            return _normalize_direction_list(
+                raw_directions,
+                directions=directions,
+                one_indexed=one_indexed,
+                max_tile_id=max_tile_id,
+                action=action,
+            )
+
+        if _is_sequence_of_sequences(raw_directions):
+            return _normalize_direction_frames_list(
+                raw_directions,
+                directions=directions,
+                one_indexed=one_indexed,
+                max_tile_id=max_tile_id,
+                action=action,
+            )
+
+    raise TypeError(
+        "Animations must be mappings of directions or ordered frame lists."
+    )
+
+
+def _normalize_direction_list(
+    frames: Sequence[int],
+    *,
+    directions: Sequence[str],
+    one_indexed: bool,
+    max_tile_id: int | None,
+    action: str,
+) -> Dict[str, List[int]]:
+    if len(frames) != len(directions):
+        raise ValueError(
+            f"Action '{action}' defines {len(frames)} directions, "
+            f"expected {len(directions)}."
+        )
+    return {
+        direction: _normalize_frames(
+            [frame],
+            one_indexed=one_indexed,
+            max_tile_id=max_tile_id,
+            action=action,
+            direction=direction,
+        )
+        for direction, frame in zip(directions, frames)
+    }
+
+
+def _normalize_direction_frames_list(
+    frames: Sequence[Sequence[int]],
+    *,
+    directions: Sequence[str],
+    one_indexed: bool,
+    max_tile_id: int | None,
+    action: str,
+) -> Dict[str, List[int]]:
+    if len(frames) != len(directions):
+        raise ValueError(
+            f"Action '{action}' defines {len(frames)} directions, "
+            f"expected {len(directions)}."
+        )
+    normalized: Dict[str, List[int]] = {}
+    for direction, direction_frames in zip(directions, frames):
+        if not _is_int_sequence(direction_frames):
+            raise TypeError(
+                "Direction animations must be sequences of integers."
+            )
+        normalized[direction] = _normalize_frames(
+            direction_frames,
+            one_indexed=one_indexed,
+            max_tile_id=max_tile_id,
+            action=action,
+            direction=direction,
+        )
+    return normalized
+
+
+def _normalize_frames(
+    frames: object,
+    *,
+    one_indexed: bool,
+    max_tile_id: int | None,
+    action: str,
+    direction: str,
+) -> List[int]:
+    if isinstance(frames, int):
+        frame_list = [frames]
+    elif _is_int_sequence(frames):
+        frame_list = list(frames)
+    else:
+        raise TypeError("Animation frames must be integers or integer sequences.")
+
+    normalized: List[int] = []
+    for frame in frame_list:
+        _validate_frame_id(frame, max_tile_id, one_indexed, action, direction)
+        normalized.append(frame - 1 if one_indexed else frame)
+    return normalized
+
+
+def _validate_frame_id(
+    frame_id: int,
+    max_tile_id: int | None,
+    one_indexed: bool,
+    action: str,
+    direction: str,
+) -> None:
+    if max_tile_id is None:
+        return
+
+    minimum = 1 if one_indexed else 0
+    maximum = max_tile_id if one_indexed else max_tile_id - 1
+    if frame_id < minimum or frame_id > maximum:
+        raise ValueError(
+            f"Animation frame {frame_id} for '{action}:{direction}' "
+            f"must be between {minimum} and {maximum}."
+        )
+
+
+def _is_sequence(value: object) -> bool:
+    return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+
+
+def _is_int_sequence(value: object) -> bool:
+    return _is_sequence(value) and all(isinstance(item, int) for item in value)
+
+
+def _is_sequence_of_sequences(value: object) -> bool:
+    if not _is_sequence(value) or _is_int_sequence(value):
+        return False
+    return all(_is_sequence(item) for item in value)
 
 
 @dataclass(frozen=True)
@@ -22,8 +219,8 @@ class SpriteSheetDescriptor:
     """Metadata describing how to slice a spritesheet image.
 
     Attributes:
-        image: Framework-specific image/surface object that the renderer
-            understands (for example, a ``pygame.Surface``).
+        image: File path to the spritesheet image. Renderers are responsible
+            for loading the image data from disk.
         frame_width: Width of a single frame in pixels.
         frame_height: Height of a single frame in pixels.
         columns: Optional number of columns in the spritesheet grid. Providing
@@ -35,7 +232,7 @@ class SpriteSheetDescriptor:
             the first frame (index 0).
     """
 
-    image: object
+    image: str | Path
     frame_width: int
     frame_height: int
     columns: int | None = None

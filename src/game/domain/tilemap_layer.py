@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Sequence
 
 from .contracts import Renderer
@@ -10,9 +11,12 @@ from .contracts import Renderer
 
 @dataclass(frozen=True)
 class TilesetDescriptor:
-    """Metadata describing how to slice a tilemap image."""
+    """Metadata describing how to slice a tilemap image.
 
-    image: object
+    ``image`` should be a file path that the renderer can load.
+    """
+
+    image: str | Path
     tile_width: int
     tile_height: int
     columns: int

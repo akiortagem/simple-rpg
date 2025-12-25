@@ -23,7 +23,7 @@ The scene computes map bounds from either `pixel_size` or `size` on these collab
 ```python
 # Slice a sprite sheet image into fixed-size tiles.
 tileset = TilesetDescriptor(
-    image=pygame.image.load("assets/tileset.png"),
+    image="assets/tileset.png",
     tile_width=16,
     tile_height=16,
     columns=8,

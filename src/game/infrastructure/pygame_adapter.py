@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Sequence
 
 import pygame
 
 from ..domain.contracts import Color, EventSource, InputEvent, Key, Renderer, TimeSource
+from .assets import load_image
 
 
 class PygameRenderer(Renderer):
@@ -15,6 +17,7 @@ class PygameRenderer(Renderer):
     def __init__(self, size: tuple[int, int], title: str) -> None:
         self._surface = pygame.display.set_mode(size)
         pygame.display.set_caption(title)
+        self._image_cache: dict[Path, pygame.Surface] = {}
 
     @property
     def size(self) -> tuple[int, int]:
@@ -45,16 +48,36 @@ class PygameRenderer(Renderer):
 
     def draw_image(
         self,
-        image: pygame.Surface,
+        image: object,
         source_rect: tuple[int, int, int, int],
         destination: tuple[int, int],
     ) -> None:
         """Draw a subsection of an image onto the main surface."""
 
-        self._surface.blit(image, destination, source_rect)
+        resolved = self._resolve_image(image, source_rect)
+        self._surface.blit(resolved, destination, source_rect)
 
     def present(self) -> None:
         pygame.display.flip()
+
+    def _resolve_image(
+        self,
+        image: object,
+        source_rect: tuple[int, int, int, int],
+    ) -> pygame.Surface:
+        if isinstance(image, (str, Path)):
+            path = Path(image)
+            width = max(source_rect[0] + source_rect[2], source_rect[2], 1)
+            height = max(source_rect[1] + source_rect[3], source_rect[3], 1)
+            cached = self._image_cache.get(path)
+            if cached and cached.get_width() >= width and cached.get_height() >= height:
+                return cached
+            loaded = load_image(path, (width, height), (200, 0, 200))
+            self._image_cache[path] = loaded
+            return loaded
+        if not isinstance(image, pygame.Surface):
+            raise TypeError("Renderer expected a file path or pygame.Surface image.")
+        return image
 
 
 class PygameEventSource(EventSource):
