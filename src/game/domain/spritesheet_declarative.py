@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Mapping, Sequence
 
-from .sprites import SpriteSheetDescriptor
+from .sprites import SpriteSheetDescriptor, normalize_animation_map
 
 
 @dataclass(frozen=True)
@@ -15,17 +16,26 @@ class SpriteSheetAnimations:
     The frame indices are integers that refer to frames in the spritesheet grid,
     counted left-to-right then top-to-bottom (row-major order), matching
     ``SpriteSheetDescriptor`` expectations.
+
+    Animations can be expressed as either explicit direction mappings or as
+    ordered lists using the direction order (down, left, right, up). For example
+    ``idle=[2, 5, 8, 11]`` becomes ``{"down": [2], "left": [5], ...}`` and
+    ``walk=[[1, 2, 3], ...]`` becomes ``{"down": [1, 2, 3], ...}``.
     """
 
-    actions: Mapping[str, Mapping[str, Sequence[int]]]
+    actions: Mapping[str, object]
 
-    def to_animation_map(self) -> dict[str, dict[str, list[int]]]:
-        return {
-            action: {
-                direction: list(frames) for direction, frames in directions.items()
-            }
-            for action, directions in self.actions.items()
-        }
+    def to_animation_map(
+        self,
+        *,
+        sheet_size: tuple[int, int] | None = None,
+        one_indexed: bool = False,
+    ) -> dict[str, dict[str, list[int]]]:
+        return normalize_animation_map(
+            self.actions,
+            sheet_size=sheet_size,
+            one_indexed=one_indexed,
+        )
 
 
 @dataclass(frozen=True)
@@ -38,7 +48,7 @@ class SpriteSheet:
     grid.
     """
 
-    image: object
+    image: str | Path
     frame_width: int
     frame_height: int
     columns: int | None = None

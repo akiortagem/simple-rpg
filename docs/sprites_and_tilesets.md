@@ -10,7 +10,7 @@ Sprites and tilesets describe how to slice images so the renderer can draw frame
 from src.game.domain.sprites import PCMapSprite, SpriteSheetDescriptor
 
 player_sheet = SpriteSheetDescriptor(
-    image=pygame.image.load("assets/player.png"),
+    image="assets/player.png",
     frame_width=32,
     frame_height=32,
     columns=4,
@@ -38,7 +38,7 @@ player = PCMapSprite(x=100, y=100, spritesheet=player_sheet, speed=150)
 from src.game.domain.tilemap_layer import TilesetDescriptor
 
 tileset = TilesetDescriptor(
-    image=pygame.image.load("assets/tileset.png"),
+    image="assets/tileset.png",
     tile_width=16,
     tile_height=16,
     columns=8,

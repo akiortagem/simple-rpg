@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Sequence
 
 from .map_scene_entities import NPC, PC
@@ -23,7 +24,7 @@ class TileSheet:
     row-major order (left-to-right, then top-to-bottom).
     """
 
-    image: object
+    image: str | Path
     tile_width: int
     tile_height: int
     columns: int
