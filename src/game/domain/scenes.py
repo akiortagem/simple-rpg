@@ -103,9 +103,14 @@ class UIRenderer:
         )
 
     def _render_text(self, renderer: Renderer, rect: Rect, text: Text) -> None:
+        position = (
+            (rect.x + rect.width // 2, rect.y + rect.height // 2)
+            if text.center
+            else (rect.x, rect.y)
+        )
         renderer.draw_text(
             text.content,
-            (rect.x, rect.y),
+            position,
             text.color,
             font_size=text.size,
             center=text.center,
@@ -125,9 +130,14 @@ class UIRenderer:
                     rect.height + padding * 2,
                 ),
             )
+        position = (
+            (rect.x + rect.width // 2, rect.y + rect.height // 2)
+            if choice.center
+            else (rect.x, rect.y)
+        )
         renderer.draw_text(
             choice.display_label,
-            (rect.x, rect.y),
+            position,
             choice.display_color,
             font_size=choice.size,
             center=choice.center,
