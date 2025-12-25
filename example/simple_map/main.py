@@ -13,10 +13,14 @@ from pathlib import Path
 from typing import Sequence
 
 from src.game.domain import TilesetDescriptor, TilemapLayer
-from src.game.domain.npc_controller import NPCController, NPCRoute
+from src.game.domain.map_scene_entities import NPC
+from src.game.domain.npc_routes import LoopRoute, NPCRoute, Route
+from src.game.domain.npc_controller import NPCController
 from src.game.domain.scenes import MapScene
-from src.game.domain.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
+from src.game.domain.sprites import PCMapSprite
+from src.game.domain.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.game.domain.tilemap import TileCollisionDetector, Tilemap
+from src.game.domain.ui_kit import show_dialog
 from src.main import build_game
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -30,7 +34,7 @@ def sprite_sheet(
     frame_height: int,
     *,
     columns: int,
-) -> SpriteSheetDescriptor:
+) -> SpriteSheet:
     image = ASSETS_DIR / filename
     animations = {
         "idle": {
@@ -46,12 +50,12 @@ def sprite_sheet(
             "up": [12, 13, 14, 15],
         },
     }
-    return SpriteSheetDescriptor(
+    return SpriteSheet(
         image=image,
         frame_width=frame_width,
         frame_height=frame_height,
         columns=columns,
-        animations=animations,
+        animations=SpriteSheetAnimations(actions=animations),
     )
 
 
@@ -92,7 +96,42 @@ def create_player() -> PCMapSprite:
         frame_height=TILE_SIZE,
         columns=4,
     )
-    return PCMapSprite(x=5 * TILE_SIZE, y=5 * TILE_SIZE, spritesheet=spritesheet, speed=140.0)
+    return PCMapSprite(
+        x=5 * TILE_SIZE,
+        y=5 * TILE_SIZE,
+        spritesheet=spritesheet.to_descriptor(),
+        speed=140.0,
+    )
+
+
+class PatrollingNPC(NPC):
+    def __init__(self, spritesheet: SpriteSheet, *, start: tuple[float, float]) -> None:
+        super().__init__(spritesheet)
+        self._start = start
+
+    def patrol(self) -> Route | None:
+        span = 6 * TILE_SIZE
+        start_x, start_y = self._start
+        return LoopRoute(
+            waypoints=[
+                (start_x, start_y),
+                (start_x + span, start_y),
+                (start_x + span, start_y + span),
+                (start_x, start_y + span),
+            ],
+            wait_time=0.6,
+        )
+
+    def interact(self, player: PCMapSprite) -> None:
+        show_dialog("The patrol keeps marching along.")
+
+
+class IdleNPC(NPC):
+    def patrol(self) -> Route | None:
+        return NPCRoute(waypoints=(), loop=True, wait_time=0.0)
+
+    def interact(self, player: PCMapSprite) -> None:
+        show_dialog("The idle NPC smiles politely.")
 
 
 def create_patrolling_npc() -> NPCController:
@@ -102,20 +141,12 @@ def create_patrolling_npc() -> NPCController:
         frame_height=TILE_SIZE,
         columns=4,
     )
-    npc = NPCMapSprite(x=20 * TILE_SIZE, y=20 * TILE_SIZE, spritesheet=spritesheet, speed=80.0)
-
-    span = 6 * TILE_SIZE
-    route = NPCRoute(
-        waypoints=[
-            (npc.x, npc.y),
-            (npc.x + span, npc.y),
-            (npc.x + span, npc.y + span),
-            (npc.x, npc.y + span),
-        ],
-        loop=True,
-        wait_time=0.6,
-    )
-    return NPCController(npc=npc, route=route, speed=80.0)
+    start = (20 * TILE_SIZE, 20 * TILE_SIZE)
+    npc = PatrollingNPC(spritesheet, start=start)
+    controller = NPCController(actor=npc, speed=80.0)
+    if controller.npc is not None:
+        controller.npc.x, controller.npc.y = start
+    return controller
 
 
 def create_idle_npc() -> NPCController:
@@ -125,9 +156,12 @@ def create_idle_npc() -> NPCController:
         frame_height=TILE_SIZE,
         columns=4,
     )
-    npc = NPCMapSprite(x=35 * TILE_SIZE, y=30 * TILE_SIZE, spritesheet=spritesheet, speed=0.0)
-    route = NPCRoute(waypoints=[(npc.x, npc.y)], loop=True, wait_time=0.0)
-    return NPCController(npc=npc, route=route, speed=0.0)
+    start = (35 * TILE_SIZE, 30 * TILE_SIZE)
+    npc = IdleNPC(spritesheet)
+    controller = NPCController(actor=npc, speed=0.0)
+    if controller.npc is not None:
+        controller.npc.x, controller.npc.y = start
+    return controller
 
 
 # Entry point ---------------------------------------------------------------
