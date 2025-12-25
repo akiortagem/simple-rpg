@@ -16,6 +16,7 @@ from .ui import (
     Rect,
     Text,
     UIElement,
+    UIController,
 )
 
 
@@ -113,6 +114,17 @@ class UIRenderer:
     def _render_menu_choice(
         self, renderer: Renderer, rect: Rect, choice: MenuChoice
     ) -> None:
+        if choice.selected and choice.highlight_color:
+            padding = max(choice.highlight_padding, 0)
+            renderer.draw_rect(
+                choice.highlight_color,
+                (
+                    rect.x - padding,
+                    rect.y - padding,
+                    rect.width + padding * 2,
+                    rect.height + padding * 2,
+                ),
+            )
         renderer.draw_text(
             choice.display_label,
             (rect.x, rect.y),
@@ -130,6 +142,7 @@ class UIScene(Scene):
     def __init__(self) -> None:
         self.screen_size = (0, 0)
         self._ui_renderer = UIRenderer()
+        self._ui_controller = UIController()
 
     @abstractmethod
     def build(self) -> UIElement:
@@ -138,10 +151,14 @@ class UIScene(Scene):
     def update(self, delta_time: float) -> None:
         return None
 
+    def handle_events(self, events: Sequence[InputEvent]) -> None:
+        root = self.build()
+        self._ui_controller.handle_events(events, root)
+
     def render(self, renderer: Renderer) -> None:
         self.screen_size = renderer.size
         renderer.clear(self.background_color)
-        root = self.build()
+        root = self._ui_controller.apply(self.build())
         layout = root.layout(Rect(0, 0, self.screen_size[0], self.screen_size[1]))
         self._ui_renderer.render(renderer, layout)
 
