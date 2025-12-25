@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol, Sequence
+from typing import Protocol
 
+from .map_scene_entities import NPC
+from .npc_routes import NPCRoute, Route
 from .sprites import NPCMapSprite, PCMapSprite
 
 
@@ -26,33 +28,24 @@ class NPCMapController(Protocol):
         """Respond to the player triggering an interaction."""
 
 
-@dataclass(frozen=True)
-class NPCRoute:
-    """Declarative route description for an NPC controller."""
-
-    waypoints: Sequence[tuple[float, float]] = field(default_factory=tuple)
-    """Positions the NPC should traverse in order."""
-
-    loop: bool = True
-    """Whether the NPC should restart at the first waypoint after finishing."""
-
-    wait_time: float = 0.0
-    """Optional pause applied after reaching each waypoint (in seconds)."""
-
-
 @dataclass
 class NPCController:
     """Controller that moves an NPC along a predefined route."""
 
-    npc: NPCMapSprite | None
-    route: NPCRoute | None = None
+    actor: NPC
+    route: Route | None = None
     speed: float = 40.0
     default_span: float = 20.0
     interactions: int = field(default=0, init=False)
+    npc: NPCMapSprite | None = field(default=None, init=False)
     _current_index: int = field(default=0, init=False)
     _elapsed: float = field(default=0.0, init=False)
     _waiting: bool = field(default=False, init=False)
     _active_route: NPCRoute | None = field(default=None, init=False)
+
+    def __post_init__(self) -> None:
+        spritesheet = self.actor.spritesheet.to_descriptor()
+        self.npc = NPCMapSprite(x=0.0, y=0.0, spritesheet=spritesheet, speed=self.speed)
 
     def on_enter(self) -> None:
         self._current_index = 0
@@ -106,6 +99,7 @@ class NPCController:
         self.npc.velocity = (dx * self.speed, dy * self.speed)
 
     def interact(self, player: PCMapSprite) -> None:
+        self.actor.interact(player)
         self.interactions += 1
 
     def _begin_wait_and_advance(self) -> None:
@@ -122,10 +116,13 @@ class NPCController:
             self._current_index += 1
 
     def _resolve_route(self) -> NPCRoute | None:
-        if self.route is None:
-            if self.npc is None:
-                return None
+        if self.npc is None:
+            return None
+
+        route = self.route or self.actor.patrol()
+        if route is None:
             left = (self.npc.x - self.default_span, self.npc.y)
             right = (self.npc.x + self.default_span, self.npc.y)
             return NPCRoute(waypoints=(left, right), loop=True, wait_time=0.0)
-        return self.route
+
+        return route.resolve((self.npc.x, self.npc.y))
