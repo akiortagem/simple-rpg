@@ -228,20 +228,23 @@ class UIController:
 
     def __init__(self, focused_index: int = 0) -> None:
         self.focused_index = focused_index
+        self._has_focus = focused_index != 0
 
     def handle_events(self, events: Sequence[InputEvent], root: UIElement) -> None:
         menu = self._find_menu(root)
         if menu is None:
             return
-        self._clamp_focus(menu)
+        self._sync_focus(menu)
         for event in events:
             if event.type != "KEYDOWN" or not event.payload:
                 continue
             key = event.payload.get("key")
             if key == Key.UP:
+                self._has_focus = True
                 self.focused_index -= 1
                 self._clamp_focus(menu)
             elif key == Key.DOWN:
+                self._has_focus = True
                 self.focused_index += 1
                 self._clamp_focus(menu)
             elif key == Key.ENTER:
@@ -250,13 +253,18 @@ class UIController:
     def apply(self, root: UIElement) -> UIElement:
         return self._apply_focus(root)
 
+    def _sync_focus(self, menu: Menu) -> None:
+        if not self._has_focus:
+            self.focused_index = menu.selected_index
+        self._clamp_focus(menu)
+
     def _clamp_focus(self, menu: Menu) -> None:
         max_index = max(len(menu.choices) - 1, 0)
         self.focused_index = max(0, min(self.focused_index, max_index))
 
     def _apply_focus(self, element: UIElement) -> UIElement:
         if isinstance(element, Menu):
-            self._clamp_focus(element)
+            self._sync_focus(element)
             return element.select(self.focused_index)
         if isinstance(element, Container) and element.content:
             return replace(element, content=self._apply_focus(element.content))
