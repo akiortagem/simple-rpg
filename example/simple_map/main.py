@@ -149,17 +149,18 @@ class SimpleMapScene(MapSceneBase):
         return Map(
             tile_sheet=tile_sheet,
             tiles=tiles,
-            pc=MapPC(starting=(2 * TILE_SIZE, 2 * TILE_SIZE), pc=PlayerPC, sprite=PLAYER_SPRITESHEET),
+            pc=MapPC(
+                starting=(2 * TILE_SIZE, 2 * TILE_SIZE),
+                pc=PlayerPC(PLAYER_SPRITESHEET),
+            ),
             npcs=(
                 MapNPC(
                     starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
-                    npc=PatrollingNPC,
-                    sprite=PATROL_SPRITESHEET,
+                    npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
                     starting=(2 * TILE_SIZE, 7 * TILE_SIZE),
-                    npc=IdleNPC,
-                    sprite=IDLE_SPRITESHEET,
+                    npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),
             impassable_ids={2, 3},

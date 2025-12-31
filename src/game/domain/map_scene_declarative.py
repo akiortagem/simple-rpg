@@ -6,10 +6,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-from .map_scene_entities import NPC, PC
+from .map_scene_entities import NPC
 from .npc_controller import NPCController
 from .sprites import PCMapSprite
-from .spritesheet_declarative import SpriteSheet
 from .tilemap import TileCollisionDetector, Tilemap
 from .tilemap_layer import TilemapLayer, TilesetDescriptor
 
@@ -43,8 +42,7 @@ class MapPC:
     """Declarative playable character definition."""
 
     starting: tuple[float, float]
-    pc: type[PC]
-    sprite: SpriteSheet
+    pc: PCMapSprite
 
 
 @dataclass(frozen=True)
@@ -52,8 +50,7 @@ class MapNPC:
     """Declarative NPC definition."""
 
     starting: tuple[float, float]
-    npc: type[NPC]
-    sprite: SpriteSheet
+    npc: NPC
 
 
 @dataclass(frozen=True)
@@ -122,15 +119,16 @@ def _normalize_collision_tiles(
 
 
 def _build_player(definition: MapPC) -> PCMapSprite:
-    player = definition.pc(definition.sprite)
-    if not isinstance(player, PCMapSprite):
+    template = definition.pc
+    if not isinstance(template, PCMapSprite):
         raise TypeError("pc must construct a PCMapSprite instance")
+    player = _clone_player(template)
     player.x, player.y = definition.starting
     return player
 
 
 def _build_npc_controller(definition: MapNPC) -> NPCController:
-    npc = definition.npc(definition.sprite)
+    npc = definition.npc
     if not isinstance(npc, NPC):
         raise TypeError("npc must construct an NPC instance")
     controller = NPCController(actor=npc)
@@ -138,3 +136,16 @@ def _build_npc_controller(definition: MapNPC) -> NPCController:
         raise TypeError("npc must construct an NPCController with an NPCMapSprite")
     controller.npc.x, controller.npc.y = definition.starting
     return controller
+
+
+def _clone_player(template: PCMapSprite) -> PCMapSprite:
+    return PCMapSprite(
+        name=template.name,
+        x=0.0,
+        y=0.0,
+        spritesheet=template.spritesheet,
+        speed=template.speed,
+        frame_duration=template.frame_duration,
+        current_action=template.current_action,
+        current_direction=template.current_direction,
+    )
