@@ -9,11 +9,12 @@ Asset filenames expected by this example:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from src.game.domain.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
 from src.game.domain.map_scene_entities import NPC, PC
-from src.game.domain.npc_routes import LoopRoute, NPCRoute, Route
+from src.game.domain.npc_routes import NPCRoute, Route
 from src.game.domain.scenes import MapSceneBase
 from src.game.domain.sprites import PCMapSprite
 from src.game.domain.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
@@ -76,23 +77,29 @@ class PlayerPC(PC):
     speed = 140.0
 
 
-class PatrollingNPC(NPC):
-    def __init__(self, spritesheet: SpriteSheet, *, start: tuple[float, float]) -> None:
-        super().__init__(spritesheet)
-        self._start = start
+@dataclass(frozen=True)
+class PatrolRoute(Route):
+    span: float
+    wait_time: float = 0.6
 
-    def patrol(self) -> Route | None:
-        span = 2 * TILE_SIZE
-        start_x, start_y = self._start
-        return LoopRoute(
-            waypoints=[
+    def resolve(self, start: tuple[float, float]) -> NPCRoute:
+        start_x, start_y = start
+        span = self.span
+        return NPCRoute(
+            waypoints=(
                 (start_x, start_y),
                 (start_x + span, start_y),
                 (start_x + span, start_y + span),
                 (start_x, start_y + span),
-            ],
-            wait_time=0.6,
+            ),
+            loop=True,
+            wait_time=self.wait_time,
         )
+
+
+class PatrollingNPC(NPC):
+    def patrol(self) -> Route | None:
+        return PatrolRoute(span=2 * TILE_SIZE)
 
     def interact(self, player: PCMapSprite) -> None:
         Dialog("The patrol keeps marching along.")
