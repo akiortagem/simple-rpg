@@ -45,4 +45,10 @@ tileset = TilesetDescriptor(
 )
 ```
 
-`TilemapLayer` accepts a 2D sequence of tile IDs. Each ID references a tile in the tileset grid (row-major order), while `None` or negative values skip drawing. Provide optional `tile_offsets` with per-cell `(dx, dy)` tuples to nudge placements, useful for tall tiles like trees.
+`TilemapLayer` accepts a 2D sequence of tile IDs. Each ID references a tile in the tileset grid (row-major order), while `None` or negative values skip drawing. Provide optional `tile_offsets` with per-cell `(dx, dy)` tuples to nudge placements, useful for tall tiles like trees. For convenience, the `parse_tilemap` helper converts 1-based tile IDs (common in editors) into the 0-based indices expected by the renderer; `0` values are treated as empty and converted to `-1`.
+
+```python
+from src.game.domain.tilemap_parser import parse_tilemap
+
+tile_rows = parse_tilemap(tilemap_file="assets/tilemap.txt")
+```
