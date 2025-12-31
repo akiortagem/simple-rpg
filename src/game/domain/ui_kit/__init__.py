@@ -5,7 +5,7 @@ from .border import Border
 from .column import Column
 from .container import Container
 from .controller import UIController
-from .dialog import show_dialog
+from .dialog import Dialog
 from .menu import Menu
 from .menu_choice import MenuChoice
 from .spacing import Spacing
@@ -15,6 +15,7 @@ __all__ = [
     "Border",
     "Column",
     "Container",
+    "Dialog",
     "LayoutNode",
     "Menu",
     "MenuChoice",
@@ -25,5 +26,4 @@ __all__ = [
     "UIController",
     "UIElement",
     "UIElements",
-    "show_dialog",
 ]
