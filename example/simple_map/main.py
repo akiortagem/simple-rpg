@@ -20,7 +20,7 @@ from src.game.domain.scenes import MapScene
 from src.game.domain.sprites import PCMapSprite
 from src.game.domain.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.game.domain.tilemap import TileCollisionDetector, Tilemap
-from src.game.domain.ui_kit import show_dialog
+from src.game.domain.ui_kit import Dialog
 from src.main import build_game
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -123,7 +123,7 @@ class PatrollingNPC(NPC):
         )
 
     def interact(self, player: PCMapSprite) -> None:
-        show_dialog("The patrol keeps marching along.")
+        Dialog("The patrol keeps marching along.")
 
 
 class IdleNPC(NPC):
@@ -131,7 +131,7 @@ class IdleNPC(NPC):
         return NPCRoute(waypoints=(), loop=True, wait_time=0.0)
 
     def interact(self, player: PCMapSprite) -> None:
-        show_dialog("The idle NPC smiles politely.")
+        Dialog("The idle NPC smiles politely.")
 
 
 def create_patrolling_npc() -> NPCController:

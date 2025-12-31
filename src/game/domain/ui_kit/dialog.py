@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+class Dialog:
+    """Declarative dialog snippet for NPC interactions."""
 
-def show_dialog(message: str) -> None:
-    """Stub hook for triggering dialog UI."""
+    def __init__(self, message: str) -> None:
+        self.message = message
+        self()
 
-    return None
+    def __call__(self) -> None:
+        """Display the dialog text."""
+
+        print(self.message)
+
