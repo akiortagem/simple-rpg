@@ -119,9 +119,10 @@ def _normalize_collision_tiles(
 
 
 def _build_player(definition: MapPC) -> PCMapSprite:
-    player = definition.pc
-    if not isinstance(player, PCMapSprite):
+    template = definition.pc
+    if not isinstance(template, PCMapSprite):
         raise TypeError("pc must construct a PCMapSprite instance")
+    player = _clone_player(template)
     player.x, player.y = definition.starting
     return player
 
@@ -135,3 +136,16 @@ def _build_npc_controller(definition: MapNPC) -> NPCController:
         raise TypeError("npc must construct an NPCController with an NPCMapSprite")
     controller.npc.x, controller.npc.y = definition.starting
     return controller
+
+
+def _clone_player(template: PCMapSprite) -> PCMapSprite:
+    return PCMapSprite(
+        name=template.name,
+        x=0.0,
+        y=0.0,
+        spritesheet=template.spritesheet,
+        speed=template.speed,
+        frame_duration=template.frame_duration,
+        current_action=template.current_action,
+        current_direction=template.current_direction,
+    )
