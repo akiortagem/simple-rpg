@@ -23,46 +23,47 @@ from src.main import build_game
 
 ASSETS_DIR = Path(__file__).parent / "assets"
 TILE_SIZE = 32
+SPRITE_TILE_SIZE = 64
 
 
 SPRITE_ANIMATIONS = SpriteSheetAnimations(
     actions={
         "idle": {
-            "down": [0],
-            "left": [4],
-            "right": [8],
-            "up": [12],
+            "down": [19],
+            "left": [12],
+            "right": [30],
+            "up": [0],
         },
         "walk": {
-            "down": [0, 1, 2, 3],
-            "left": [4, 5, 6, 7],
-            "right": [8, 9, 10, 11],
-            "up": [12, 13, 14, 15],
+            "down": [18, 19, 20, 21, 22, 23, 24, 25, 26],
+            "left": [9, 10, 11, 12, 13, 14, 15, 16, 17],
+            "right": [27, 28, 29, 30, 31, 32, 33, 34, 35],
+            "up": [0, 1, 2, 3, 4, 5, 6, 7, 8],
         },
     },
 )
 
 PLAYER_SPRITESHEET = SpriteSheet(
     image=ASSETS_DIR / "player.png",
-    frame_width=TILE_SIZE,
-    frame_height=TILE_SIZE,
-    columns=4,
+    frame_width=SPRITE_TILE_SIZE,
+    frame_height=SPRITE_TILE_SIZE,
+    columns=9,
     animations=SPRITE_ANIMATIONS,
 )
 
 PATROL_SPRITESHEET = SpriteSheet(
     image=ASSETS_DIR / "npc_patrol.png",
-    frame_width=TILE_SIZE,
-    frame_height=TILE_SIZE,
-    columns=4,
+    frame_width=SPRITE_TILE_SIZE,
+    frame_height=SPRITE_TILE_SIZE,
+    columns=9,
     animations=SPRITE_ANIMATIONS,
 )
 
 IDLE_SPRITESHEET = SpriteSheet(
     image=ASSETS_DIR / "npc_idle.png",
-    frame_width=TILE_SIZE,
-    frame_height=TILE_SIZE,
-    columns=4,
+    frame_width=SPRITE_TILE_SIZE,
+    frame_height=SPRITE_TILE_SIZE,
+    columns=9,
     animations=SPRITE_ANIMATIONS,
 )
 
@@ -99,7 +100,7 @@ class PatrolRoute(Route):
 
 class PatrollingNPC(NPC):
     def patrol(self) -> Route | None:
-        return PatrolRoute(span=2 * TILE_SIZE)
+        return PatrolRoute(span=1 * TILE_SIZE)
 
     def interact(self, player: PCMapSprite) -> None:
         Dialog("The patrol keeps marching along.")
@@ -128,22 +129,22 @@ class SimpleMapScene(MapSceneBase):
 
     def build(self) -> Map:
         tiles = [
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [2, 2, 2, 2, 2, 3, 2, 2, 2, 2],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [7, 7, 7, 7, 7, 56, 7, 7, 7, 7],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
         ]
         tile_sheet = TileSheet(
             image=ASSETS_DIR / "tileset.png",
             tile_width=TILE_SIZE,
             tile_height=TILE_SIZE,
-            columns=4,
+            columns=8,
         )
 
         return Map(
@@ -163,7 +164,7 @@ class SimpleMapScene(MapSceneBase):
                     npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),
-            impassable_ids={2, 3},
+            impassable_ids={8, 7},
         )
 
 
