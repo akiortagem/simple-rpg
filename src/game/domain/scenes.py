@@ -301,6 +301,15 @@ class MapScene(Scene):
         for sprite in self._all_sprites():
             sprite.collision_detector = collision_detector
             sprite.map_bounds = bounds
+        self._wire_sprite_colliders()
+
+    def _wire_sprite_colliders(self) -> None:
+        self.player.sprite_colliders = lambda: [npc.hitbox for npc in self._npc_sprites]
+        for npc in self._npc_sprites:
+            npc.sprite_colliders = lambda npc=npc: [
+                self.player.hitbox,
+                *[other.hitbox for other in self._npc_sprites if other is not npc],
+            ]
 
     def on_enter(self) -> None:
         for controller in self.npc_controllers:

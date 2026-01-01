@@ -75,6 +75,26 @@ class NPCController:
             self.npc.velocity = (0.0, 0.0)
             return
 
+        target_x, target_y = self._active_route.waypoints[self._current_index]
+        dx = target_x - self.npc.x
+        dy = target_y - self.npc.y
+        distance = (dx * dx + dy * dy) ** 0.5
+
+        if self.npc.blocked and distance != 0:
+            step = self.speed * delta_time
+            if distance <= step:
+                proposed_x = target_x
+                proposed_y = target_y
+            else:
+                direction_x = dx / distance
+                direction_y = dy / distance
+                proposed_x = self.npc.x + direction_x * step
+                proposed_y = self.npc.y + direction_y * step
+            proposed_hitbox = self.npc.hitbox_at(proposed_x, proposed_y)
+            if self.npc.collides_with(proposed_hitbox):
+                self.npc.velocity = (0.0, 0.0)
+                return
+
         if self._waiting:
             self._elapsed += delta_time
             self.npc.velocity = (0.0, 0.0)
@@ -82,11 +102,6 @@ class NPCController:
                 return
             self._waiting = False
             self._elapsed = 0.0
-
-        target_x, target_y = self._active_route.waypoints[self._current_index]
-        dx = target_x - self.npc.x
-        dy = target_y - self.npc.y
-        distance = (dx * dx + dy * dy) ** 0.5
 
         if distance == 0:
             self._begin_wait_and_advance()
