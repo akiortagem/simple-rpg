@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Mapping, Protocol, Sequence, Set, Tuple
+from typing import Callable, Dict, List, Mapping, Protocol, Sequence, Set, Tuple
 
 from .contracts import Key, Renderer
 from .entities import Entity
@@ -338,7 +338,13 @@ class CharacterMapSprite(CharacterSprite):
     velocity: tuple[float, float] = (0.0, 0.0)
     map_bounds: tuple[int, int] | None = None
     collision_detector: CollisionDetector | None = None
+    sprite_colliders: (
+        Sequence[Callable[[], tuple[float, float, float, float]]]
+        | Callable[[], Sequence[tuple[float, float, float, float]]]
+        | None
+    ) = None
     _facing_direction: str = field(default="down", init=False)
+    _blocked: bool = field(default=False, init=False)
 
     def determine_animation_state(self) -> tuple[str, str]:
         if self.velocity != (0.0, 0.0):
@@ -356,6 +362,7 @@ class CharacterMapSprite(CharacterSprite):
         if delta_time <= 0 or self.velocity == (0.0, 0.0):
             return
 
+        self._blocked = False
         target_x = self.x + self.velocity[0] * delta_time
         target_y = self.y + self.velocity[1] * delta_time
 
@@ -370,6 +377,7 @@ class CharacterMapSprite(CharacterSprite):
         clamped = self._clamp_to_bounds(proposed_primary, primary_size, axis)
         hitbox = self._hitbox(clamped if axis == "x" else self.x, secondary if axis == "x" else clamped)
         if self._collides(hitbox):
+            self._blocked = True
             return self.x if axis == "x" else self.y
         return clamped
 
@@ -380,9 +388,14 @@ class CharacterMapSprite(CharacterSprite):
         return max(0.0, min(proposed, max(limit - size, 0.0)))
 
     def _collides(self, hitbox: tuple[float, float, float, float]) -> bool:
-        if self.collision_detector is None:
-            return False
-        return self.collision_detector.collides(hitbox)
+        if self.collision_detector and self.collision_detector.collides(hitbox):
+            return True
+        for collider_hitbox in self._sprite_hitboxes():
+            if collider_hitbox == self.hitbox:
+                continue
+            if _intersects(hitbox, collider_hitbox):
+                return True
+        return False
 
     def _hitbox(self, x: float, y: float) -> tuple[float, float, float, float]:
         return (
@@ -391,6 +404,23 @@ class CharacterMapSprite(CharacterSprite):
             float(self.spritesheet.frame_width),
             float(self.spritesheet.frame_height),
         )
+
+    def hitbox_at(self, x: float, y: float) -> tuple[float, float, float, float]:
+        """Hitbox for the character sprite anchored at the given position."""
+
+        return self._hitbox(x, y)
+
+    def collides_with(self, hitbox: tuple[float, float, float, float]) -> bool:
+        """Return whether the given hitbox collides with map or sprite blockers."""
+
+        return self._collides(hitbox)
+
+    def _sprite_hitboxes(self) -> Sequence[tuple[float, float, float, float]]:
+        if self.sprite_colliders is None:
+            return []
+        if callable(self.sprite_colliders):
+            return list(self.sprite_colliders())
+        return [collider() for collider in self.sprite_colliders]
 
     def _direction_from_vector(self, dx: float, dy: float) -> str:
         if abs(dx) > abs(dy):
@@ -410,6 +440,12 @@ class CharacterMapSprite(CharacterSprite):
         """Current hitbox of the character sprite."""
 
         return self._hitbox(self.x, self.y)
+
+    @property
+    def blocked(self) -> bool:
+        """Whether the last movement attempt was blocked by a collision."""
+
+        return self._blocked
 
 
 class PCMapSprite(CharacterMapSprite):
@@ -444,3 +480,9 @@ class NPCMapSprite(CharacterMapSprite):
 
     def handle_input(self, pressed: Set[str]) -> None:  # pragma: no cover - NPCs ignore input
         return None
+
+
+def _intersects(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    return not (ax + aw <= bx or bx + bw <= ax or ay + ah <= by or by + bh <= ay)
