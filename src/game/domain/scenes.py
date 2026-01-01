@@ -304,11 +304,17 @@ class MapScene(Scene):
         self._wire_sprite_colliders()
 
     def _wire_sprite_colliders(self) -> None:
-        self.player.sprite_colliders = lambda: [npc.hitbox for npc in self._npc_sprites]
+        self.player.sprite_colliders = lambda: [
+            npc.hitbox for npc in self._npc_sprites if npc.sprite_colliders is not None
+        ]
         for npc in self._npc_sprites:
             npc.sprite_colliders = lambda npc=npc: [
                 self.player.hitbox,
-                *[other.hitbox for other in self._npc_sprites if other is not npc],
+                *[
+                    other.hitbox
+                    for other in self._npc_sprites
+                    if other is not npc and other.sprite_colliders is not None
+                ],
             ]
 
     def on_enter(self) -> None:
