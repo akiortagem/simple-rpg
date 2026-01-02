@@ -73,6 +73,8 @@ By default, `MapScene` wires sprite hitboxes so the player and NPCs block each o
 
 Character sprites expose hitbox configuration so you can shrink collision boxes relative to the sprite frame size. Measurements are in pixels (the same coordinate space as `x`, `y`, and the spritesheet frame size). `hitbox_size` sets the collision box width/height; `hitbox_offset` shifts the hitbox relative to the sprite's top-left corner.
 
+When using declarative map scenes, the `MapPC` template's hitbox settings are copied to the runtime player sprite, and `MapNPC` definitions carry their hitbox settings into the spawned `NPCMapSprite`.
+
 ```python
 class Hero(PC):
     hitbox_size = (24.0, 28.0)
