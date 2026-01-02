@@ -148,4 +148,6 @@ def _clone_player(template: PCMapSprite) -> PCMapSprite:
         frame_duration=template.frame_duration,
         current_action=template.current_action,
         current_direction=template.current_direction,
+        hitbox_size=template.hitbox_size,
+        hitbox_offset=template.hitbox_offset,
     )
