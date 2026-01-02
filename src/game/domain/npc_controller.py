@@ -46,12 +46,16 @@ class NPCController:
     def __post_init__(self) -> None:
         spritesheet = self.actor.spritesheet.to_descriptor()
         name = getattr(self.actor, "name", self.actor.__class__.__name__)
+        hitbox_size = getattr(self.actor, "hitbox_size", None)
+        hitbox_offset = getattr(self.actor, "hitbox_offset", (0.0, 0.0))
         self.npc = NPCMapSprite(
             name=name,
             x=0.0,
             y=0.0,
             spritesheet=spritesheet,
             speed=self.speed,
+            hitbox_size=hitbox_size,
+            hitbox_offset=hitbox_offset,
         )
 
     def on_enter(self) -> None:

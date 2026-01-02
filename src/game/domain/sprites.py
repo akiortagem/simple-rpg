@@ -332,8 +332,16 @@ class CollisionDetector(Protocol):
 
 @dataclass(kw_only=True)
 class CharacterMapSprite(CharacterSprite):
-    """A character sprite aware of map bounds and collision layers."""
+    """A character sprite aware of map bounds and collision layers.
 
+    Hitbox measurements are in pixels (the same coordinate space as the sprite
+    position and spritesheet frame size). ``hitbox_size`` defines the width and
+    height of the collision box. ``hitbox_offset`` shifts the hitbox relative to
+    the sprite's top-left corner.
+    """
+
+    hitbox_size: tuple[float, float] | None = None
+    hitbox_offset: tuple[float, float] = (0.0, 0.0)
     speed: float = 120.0
     velocity: tuple[float, float] = (0.0, 0.0)
     map_bounds: tuple[int, int] | None = None
@@ -398,12 +406,20 @@ class CharacterMapSprite(CharacterSprite):
         return False
 
     def _hitbox(self, x: float, y: float) -> tuple[float, float, float, float]:
-        return (
-            x,
-            y,
-            float(self.spritesheet.frame_width),
-            float(self.spritesheet.frame_height),
-        )
+        frame_width = float(self.spritesheet.frame_width)
+        frame_height = float(self.spritesheet.frame_height)
+        if self.hitbox_size is None:
+            width = frame_width * 0.75
+            height = frame_height * 0.75
+            if self.hitbox_offset == (0.0, 0.0):
+                offset_x = (frame_width - width) / 2
+                offset_y = (frame_height - height) / 2
+            else:
+                offset_x, offset_y = self.hitbox_offset
+        else:
+            width, height = self.hitbox_size
+            offset_x, offset_y = self.hitbox_offset
+        return (x + offset_x, y + offset_y, width, height)
 
     def hitbox_at(self, x: float, y: float) -> tuple[float, float, float, float]:
         """Hitbox for the character sprite anchored at the given position."""

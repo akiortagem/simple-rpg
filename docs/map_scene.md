@@ -69,6 +69,20 @@ scene = MapScene(
 
 By default, `MapScene` wires sprite hitboxes so the player and NPCs block each other. To allow overlap, clear the collider source on the sprite you want to ignore (for example, `my_npc.sprite_colliders = None`).
 
+## Custom hitboxes
+
+Character sprites expose hitbox configuration so you can shrink collision boxes relative to the sprite frame size. Measurements are in pixels (the same coordinate space as `x`, `y`, and the spritesheet frame size). `hitbox_size` sets the collision box width/height; `hitbox_offset` shifts the hitbox relative to the sprite's top-left corner.
+
+```python
+class Hero(PC):
+    hitbox_size = (24.0, 28.0)
+    hitbox_offset = (4.0, 12.0)
+
+class Shopkeeper(NPC):
+    hitbox_size = (20.0, 26.0)
+    hitbox_offset = (6.0, 14.0)
+```
+
 ## Camera and scrolling
 
 `MapScene` keeps a camera that follows the player's hitbox and clamps itself to the map bounds before rendering. The renderer's size determines how much of the map is visible at once, so the viewport stays fixed while the tilemap and sprites scroll underneath. Developers can pan the view without dealing with renderer math by calling `scene.pan_camera(dx, dy)` or apply a sequence of moves at once with `scene.pan_camera_route([(dx, dy), ...])`; the offset persists across frames and stacks with the automatic player tracking.
