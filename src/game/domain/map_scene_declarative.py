@@ -82,12 +82,23 @@ class Map:
 
 
 @dataclass(frozen=True)
+class DebugCollisionLayer:
+    """Collision metadata for debugging per tile layer."""
+
+    tiles: Sequence[Sequence[int | None]]
+    tile_size: tuple[int, int]
+    impassable_ids: set[int]
+
+
+@dataclass(frozen=True)
 class MapSceneAssets:
     """Imperative objects built from a declarative map definition."""
 
     visual_tilemap: TilemapLayer
     object_tilemap: TilemapLayer | None
     collision_tilemap: TileCollisionDetector
+    base_collision_layer: DebugCollisionLayer | None
+    object_collision_layer: DebugCollisionLayer | None
     player: PCMapSprite
     npc_controllers: list[NPCController]
 
@@ -113,10 +124,27 @@ def build_map_scene_assets(definition: Map) -> MapSceneAssets:
 
     player = _build_player(definition.pc)
     npc_controllers = [_build_npc_controller(npc) for npc in definition.npcs]
+    base_collision_layer = DebugCollisionLayer(
+        tiles=definition.tiles,
+        tile_size=(tileset.tile_width, tileset.tile_height),
+        impassable_ids=definition.impassable_ids,
+    )
+    object_collision_layer = None
+    if definition.object_tiles and definition.object_tilesheet:
+        object_collision_layer = DebugCollisionLayer(
+            tiles=definition.object_tiles,
+            tile_size=(
+                definition.object_tilesheet.tile_width,
+                definition.object_tilesheet.tile_height,
+            ),
+            impassable_ids=definition.impassable_object_ids,
+        )
     return MapSceneAssets(
         visual_tilemap=visual_tilemap,
         object_tilemap=object_tilemap,
         collision_tilemap=collision_tilemap,
+        base_collision_layer=base_collision_layer,
+        object_collision_layer=object_collision_layer,
         player=player,
         npc_controllers=npc_controllers,
     )
