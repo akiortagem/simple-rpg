@@ -458,6 +458,12 @@ class CharacterMapSprite(CharacterSprite):
         return self._hitbox(self.x, self.y)
 
     @property
+    def render_order_y(self) -> float:
+        """Sort key for rendering order based on sprite's on-screen feet."""
+
+        return self.y + float(self.spritesheet.frame_height)
+
+    @property
     def blocked(self) -> bool:
         """Whether the last movement attempt was blocked by a collision."""
 
