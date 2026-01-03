@@ -106,7 +106,7 @@ def test_initializes_collision_and_bounds():
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     controller = FakeController(npc=npc)
 
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     assert player.collision_detector is tilemap
     assert npc.collision_detector is tilemap
@@ -119,7 +119,7 @@ def test_handle_events_routes_to_active_character():
     player = make_sprite(InputCapturingSprite, name="player")
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     controller = FakeController(npc=npc)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     events = [
         InputEvent(type="KEYDOWN", payload={"key": Key.RIGHT}),
@@ -136,7 +136,7 @@ def test_update_advances_sprites_and_manager():
     player = make_sprite(UpdateTrackingSprite)
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     controller = FakeController(npc=npc)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.update(0.5)
 
@@ -225,7 +225,7 @@ def test_handle_interaction_invokes_manager_when_facing_npc():
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     npc.y = player.spritesheet.frame_height + 2  # directly in front of the player
     controller = FakeController(npc=npc)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.ENTER})])
 
@@ -237,7 +237,7 @@ def test_lifecycle_hooks_delegate_to_manager():
     player = make_sprite()
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     controller = FakeController(npc=npc)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.on_enter()
     scene.on_exit()
@@ -252,7 +252,7 @@ def test_interaction_requires_facing_and_range():
     npc = NPCMapSprite(name="npc", spritesheet=player.spritesheet)
     npc.x = player.spritesheet.frame_width + 15  # to the right but out of reach
     controller = FakeController(npc=npc)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.RIGHT})])
 
