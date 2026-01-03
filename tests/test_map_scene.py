@@ -9,6 +9,7 @@ from src.game.domain.contracts import InputEvent, Key
 from src.game.domain.npc_controller import NPCMapController
 from src.game.domain.scenes import MapScene
 from src.game.domain.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
+from src.game.domain.tilemap_layer import TilemapLayer, TilesetDescriptor
 
 
 class FakeRenderer:
@@ -217,6 +218,45 @@ def test_pan_camera_route_applies_multiple_steps_and_clamps():
 
     assert tilemap.render_calls[-1][1] == (320, 0)
     assert renderer.draw_images[-1][2] == (-120, 150)
+
+
+def test_render_interleaves_object_tiles_with_sprites_by_depth():
+    base_tileset = TilesetDescriptor(
+        image="base-tiles",
+        tile_width=10,
+        tile_height=10,
+        columns=1,
+    )
+    object_tileset = TilesetDescriptor(
+        image="object-tiles",
+        tile_width=10,
+        tile_height=10,
+        columns=1,
+    )
+    visual_tilemap = TilemapLayer(base_tileset, [[0], [0]])
+    object_tilemap = TilemapLayer(object_tileset, [[None], [0]])
+    spritesheet = SpriteSheetDescriptor(
+        image="sprite-image",
+        frame_width=10,
+        frame_height=10,
+        columns=1,
+        animations={"idle": {"down": [0]}, "walk": {"right": [0]}},
+    )
+    player = PCMapSprite(name="hero", spritesheet=spritesheet)
+    player.y = 5
+    renderer = FakeRenderer()
+
+    scene = MapScene(
+        visual_tilemap,
+        visual_tilemap,
+        player,
+        object_tilemap=object_tilemap,
+    )
+
+    scene.render(renderer)
+
+    rendered_images = [entry[0] for entry in renderer.draw_images]
+    assert rendered_images[-2:] == ["sprite-image", "object-tiles"]
 
 
 def test_handle_interaction_invokes_manager_when_facing_npc():
