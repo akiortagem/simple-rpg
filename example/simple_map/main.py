@@ -153,6 +153,19 @@ class SimpleMapScene(MapSceneBase):
             tile_height=TILE_SIZE,
             columns=8,
         )
+        # Object layer: use 0 for empty cells; non-zero IDs map into the object tilesheet.
+        object_tiles = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 10, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
 
         return Map(
             tile_sheet=tile_sheet,
@@ -172,6 +185,9 @@ class SimpleMapScene(MapSceneBase):
                 ),
             ),
             impassable_ids={8, 7},
+            object_tiles=object_tiles,
+            object_tilesheet=tile_sheet,
+            impassable_object_ids={10},
         )
 
 
