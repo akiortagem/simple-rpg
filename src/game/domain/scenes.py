@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 from .contracts import Color, GameConfig, InputEvent, Key, Renderer
 from .map_scene_declarative import DebugCollisionLayer, Map, build_map_scene_assets
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
+from .tilemap_layer import TilemapLayer
 from .ui_kit import (
     Border,
     Container,
@@ -210,6 +212,43 @@ class RenderableTilemapLayer(Protocol):
         ...
 
 
+class RenderItem(Protocol):
+    """Renderable item with a depth ordering value."""
+
+    @property
+    def render_order_y(self) -> float:
+        ...
+
+    def render(self, renderer: Renderer, camera_offset: tuple[int, int] = (0, 0)) -> None:
+        ...
+
+
+@dataclass(frozen=True)
+class ObjectTileRenderItem:
+    """Adapter for rendering a single object tile with depth ordering."""
+
+    tilemap: TilemapLayer
+    row: int
+    column: int
+    tile_id: int
+    offset: tuple[int, int] = (0, 0)
+
+    @property
+    def render_order_y(self) -> float:
+        tile_height = self.tilemap.tile_size[1]
+        return self.row * tile_height + tile_height + self.offset[1]
+
+    def render(self, renderer: Renderer, camera_offset: tuple[int, int] = (0, 0)) -> None:
+        tile_width, tile_height = self.tilemap.tile_size
+        camera_x, camera_y = camera_offset
+        source_rect = self.tilemap._source_rect(self.tile_id)
+        destination = (
+            int(self.column * tile_width - camera_x + self.offset[0]),
+            int(self.row * tile_height - camera_y + self.offset[1]),
+        )
+        renderer.draw_image(self.tilemap.tileset.image, source_rect, destination)
+
+
 class MapCamera:
     """Camera that tracks a target and allows manual panning."""
 
@@ -365,13 +404,18 @@ class MapScene(Scene):
         camera_offset = self.camera.offset
 
         self.visual_tilemap.render(renderer, camera_offset=camera_offset)
-        if self.object_tilemap is not None:
+        render_items: list[RenderItem] = []
+        if isinstance(self.object_tilemap, TilemapLayer):
+            render_items.extend(
+                self._object_tile_render_items(
+                    self.object_tilemap, renderer, camera_offset
+                )
+            )
+        elif self.object_tilemap is not None:
             self.object_tilemap.render(renderer, camera_offset=camera_offset)
-        for sprite in sorted(
-            self._all_sprites(),
-            key=lambda item: item.render_order_y,
-        ):
-            sprite.render(renderer, camera_offset=camera_offset)
+        render_items.extend(self._all_sprites())
+        for item in sorted(render_items, key=lambda item: item.render_order_y):
+            item.render(renderer, camera_offset=camera_offset)
         if self.config.debug_collision:
             self._render_collision_debug(renderer, camera_offset)
             for sprite in self._all_sprites():
@@ -441,6 +485,55 @@ class MapScene(Scene):
                     int(tile_height),
                 )
                 renderer.draw_rect_outline(color, rect)
+
+    def _object_tile_render_items(
+        self,
+        tilemap: TilemapLayer,
+        renderer: Renderer,
+        camera_offset: tuple[int, int],
+    ) -> list[ObjectTileRenderItem]:
+        tile_width, tile_height = tilemap.tile_size
+        if tile_width <= 0 or tile_height <= 0:
+            return []
+
+        rows = len(tilemap.tiles)
+        columns = len(tilemap.tiles[0]) if rows else 0
+        if rows == 0 or columns == 0:
+            return []
+
+        view_width, view_height = renderer.size
+        camera_x, camera_y = camera_offset
+        start_column = max(0, int(camera_x // tile_width))
+        end_column = min(columns, int((camera_x + view_width + tile_width - 1) // tile_width))
+        start_row = max(0, int(camera_y // tile_height))
+        end_row = min(rows, int((camera_y + view_height + tile_height - 1) // tile_height))
+
+        items: list[ObjectTileRenderItem] = []
+        for row in range(start_row, end_row):
+            tile_row = tilemap.tiles[row]
+            offset_row = (
+                tilemap.tile_offsets[row]
+                if tilemap.tile_offsets and row < len(tilemap.tile_offsets)
+                else None
+            )
+            for column in range(start_column, end_column):
+                tile_id = tile_row[column]
+                if tile_id is None or tile_id < 0:
+                    continue
+
+                offset = (0, 0)
+                if offset_row and column < len(offset_row) and offset_row[column]:
+                    offset = offset_row[column]  # type: ignore[assignment]
+                items.append(
+                    ObjectTileRenderItem(
+                        tilemap=tilemap,
+                        row=row,
+                        column=column,
+                        tile_id=tile_id,
+                        offset=offset,
+                    )
+                )
+        return items
 
     def pan_camera(self, dx: float, dy: float) -> None:
         """Shift the camera by the given delta without exposing renderer details."""
