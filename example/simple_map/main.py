@@ -141,7 +141,7 @@ class SimpleMapScene(MapSceneBase):
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
-            [7, 7, 7, 7, 7, 56, 7, 7, 7, 7],
+            [7, 7, 1, 7, 7, 56, 7, 7, 7, 7],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
@@ -153,19 +153,28 @@ class SimpleMapScene(MapSceneBase):
             tile_height=TILE_SIZE,
             columns=8,
         )
-        # Object layer: use 0 for empty cells; non-zero IDs map into the object tilesheet.
+
         object_tiles = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 10, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 8, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 24, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ]
+
+        object_tilesheet = TileSheet(
+            image=ASSETS_DIR / "objects_tilesheet.png",
+            tile_width=TILE_SIZE,
+            tile_height=TILE_SIZE,
+            columns=16,
+        )
+
+        impassable_object_ids={8, 24}
 
         return Map(
             tile_sheet=tile_sheet,
@@ -174,6 +183,9 @@ class SimpleMapScene(MapSceneBase):
                 starting=(2 * TILE_SIZE, 2 * TILE_SIZE),
                 pc=PlayerPC(PLAYER_SPRITESHEET),
             ),
+            object_tiles=object_tiles,
+            object_tilesheet=object_tilesheet,
+            impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
                     starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
@@ -185,9 +197,6 @@ class SimpleMapScene(MapSceneBase):
                 ),
             ),
             impassable_ids={8, 7},
-            object_tiles=object_tiles,
-            object_tilesheet=tile_sheet,
-            impassable_object_ids={10},
         )
 
 
