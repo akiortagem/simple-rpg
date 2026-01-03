@@ -368,6 +368,18 @@ class MapScene(Scene):
             key=lambda item: item.render_order_y,
         ):
             sprite.render(renderer, camera_offset=camera_offset)
+        if self.config.debug_collision:
+            for sprite in self._all_sprites():
+                if not hasattr(sprite, "hitbox"):
+                    continue
+                hitbox = sprite.hitbox
+                rect = (
+                    int(hitbox[0] - camera_offset[0]),
+                    int(hitbox[1] - camera_offset[1]),
+                    int(hitbox[2]),
+                    int(hitbox[3]),
+                )
+                renderer.draw_rect_outline((255, 0, 0), rect)
 
     def pan_camera(self, dx: float, dy: float) -> None:
         """Shift the camera by the given delta without exposing renderer details."""
