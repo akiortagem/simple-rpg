@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Protocol, Sequence
 
-from .contracts import Color, InputEvent, Key, Renderer
+from .contracts import Color, GameConfig, InputEvent, Key, Renderer
 from .map_scene_declarative import Map, build_map_scene_assets
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
@@ -30,6 +30,7 @@ class Scene(ABC):
 
     background_color: Color = (0, 0, 0)
     _exit_requested: bool = False
+    config: GameConfig = GameConfig()
 
     def request_exit(self) -> None:
         """Ask the game loop to end after the current frame."""

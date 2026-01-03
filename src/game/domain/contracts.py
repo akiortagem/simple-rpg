@@ -16,6 +16,13 @@ class InputEvent:
     payload: dict[str, object] | None = None
 
 
+@dataclass(frozen=True)
+class GameConfig:
+    """Lightweight configuration shared across game systems."""
+
+    debug_collision: bool = False
+
+
 class Key:
     """Named key constants for framework-agnostic input handling."""
 
