@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Protocol, Sequence
 
 from .contracts import Color, GameConfig, InputEvent, Key, Renderer
-from .map_scene_declarative import Map, build_map_scene_assets
+from .map_scene_declarative import DebugCollisionLayer, Map, build_map_scene_assets
 from .npc_controller import NPCMapController
 from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
 from .ui_kit import (
@@ -283,12 +283,16 @@ class MapScene(Scene):
         player: PCMapSprite,
         object_tilemap: RenderableTilemapLayer | None = None,
         npc_controllers: Sequence[NPCMapController] | None = None,
+        base_collision_layer: DebugCollisionLayer | None = None,
+        object_collision_layer: DebugCollisionLayer | None = None,
     ) -> None:
         self.visual_tilemap = visual_tilemap
         self.object_tilemap = object_tilemap
         self.collision_tilemap = collision_tilemap
         self.player = player
         self.npc_controllers = list(npc_controllers or [])
+        self.base_collision_layer = base_collision_layer
+        self.object_collision_layer = object_collision_layer
         self._npc_sprites: list[NPCMapSprite] = [c.npc for c in self.npc_controllers if c.npc]
         self._pressed_keys: set[str] = set()
         self.camera = MapCamera()
@@ -369,6 +373,7 @@ class MapScene(Scene):
         ):
             sprite.render(renderer, camera_offset=camera_offset)
         if self.config.debug_collision:
+            self._render_collision_debug(renderer, camera_offset)
             for sprite in self._all_sprites():
                 if not hasattr(sprite, "hitbox"):
                     continue
@@ -380,6 +385,62 @@ class MapScene(Scene):
                     int(hitbox[3]),
                 )
                 renderer.draw_rect_outline((255, 0, 0), rect)
+
+    def _render_collision_debug(
+        self, renderer: Renderer, camera_offset: tuple[int, int]
+    ) -> None:
+        if self.base_collision_layer:
+            self._render_collision_layer(
+                renderer,
+                camera_offset,
+                self.base_collision_layer,
+                color=(255, 165, 0),
+            )
+        if self.object_collision_layer:
+            self._render_collision_layer(
+                renderer,
+                camera_offset,
+                self.object_collision_layer,
+                color=(0, 200, 255),
+            )
+
+    def _render_collision_layer(
+        self,
+        renderer: Renderer,
+        camera_offset: tuple[int, int],
+        layer: DebugCollisionLayer,
+        color: Color,
+    ) -> None:
+        tile_width, tile_height = layer.tile_size
+        if tile_width <= 0 or tile_height <= 0:
+            return
+
+        tiles = layer.tiles
+        rows = len(tiles)
+        columns = len(tiles[0]) if rows else 0
+        if rows == 0 or columns == 0:
+            return
+
+        view_width, view_height = renderer.size
+        camera_x, camera_y = camera_offset
+        start_column = max(0, int(camera_x // tile_width))
+        end_column = min(columns, int((camera_x + view_width + tile_width - 1) // tile_width))
+        start_row = max(0, int(camera_y // tile_height))
+        end_row = min(rows, int((camera_y + view_height + tile_height - 1) // tile_height))
+
+        for row in range(start_row, end_row):
+            tile_row = tiles[row]
+            for column in range(start_column, end_column):
+                tile_id = tile_row[column]
+                if tile_id is None or tile_id not in layer.impassable_ids:
+                    continue
+                rect = (
+                    int(column * tile_width - camera_x),
+                    int(row * tile_height - camera_y),
+                    int(tile_width),
+                    int(tile_height),
+                )
+                renderer.draw_rect_outline(color, rect)
 
     def pan_camera(self, dx: float, dy: float) -> None:
         """Shift the camera by the given delta without exposing renderer details."""
@@ -434,6 +495,8 @@ class MapSceneBase(MapScene, ABC):
             collision_tilemap=assets.collision_tilemap,
             player=assets.player,
             npc_controllers=assets.npc_controllers,
+            base_collision_layer=assets.base_collision_layer,
+            object_collision_layer=assets.object_collision_layer,
         )
 
 
