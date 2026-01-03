@@ -358,7 +358,10 @@ class MapScene(Scene):
         camera_offset = self.camera.offset
 
         self.visual_tilemap.render(renderer, camera_offset=camera_offset)
-        for sprite in self._all_sprites():
+        for sprite in sorted(
+            self._all_sprites(),
+            key=lambda item: item.render_order_y,
+        ):
             sprite.render(renderer, camera_offset=camera_offset)
 
     def pan_camera(self, dx: float, dy: float) -> None:
