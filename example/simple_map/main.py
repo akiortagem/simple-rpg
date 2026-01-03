@@ -72,10 +72,13 @@ IDLE_SPRITESHEET = SpriteSheet(
 
 MAP_SIZE = 10
 
+HITBOX_SIZE = (20, 32)
+
 
 class PlayerPC(PC):
     name = "Player"
     speed = 140.0
+    hitbox_size = HITBOX_SIZE
 
 
 @dataclass(frozen=True)
@@ -99,6 +102,8 @@ class PatrolRoute(Route):
 
 
 class PatrollingNPC(NPC):
+    hitbox_size = HITBOX_SIZE
+
     def patrol(self) -> Route | None:
         return PatrolRoute(span=1 * TILE_SIZE)
 
@@ -107,6 +112,8 @@ class PatrollingNPC(NPC):
 
 
 class IdleNPC(NPC):
+    hitbox_size = HITBOX_SIZE
+
     def patrol(self) -> Route | None:
         return NPCRoute(waypoints=(), loop=True, wait_time=0.0)
 
