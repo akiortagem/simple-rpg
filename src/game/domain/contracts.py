@@ -49,6 +49,15 @@ class Renderer(Protocol):
         """Draw a filled rectangle."""
         raise NotImplementedError
 
+    def draw_rect_outline(
+        self,
+        color: Color,
+        rect: tuple[int, int, int, int],
+        width: int = 1,
+    ) -> None:
+        """Draw a rectangle outline."""
+        raise NotImplementedError
+
     def draw_image(
         self,
         image: object,

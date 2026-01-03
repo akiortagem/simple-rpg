@@ -29,6 +29,14 @@ class PygameRenderer(Renderer):
     def draw_rect(self, color: Color, rect: tuple[int, int, int, int]) -> None:
         pygame.draw.rect(self._surface, color, rect)
 
+    def draw_rect_outline(
+        self,
+        color: Color,
+        rect: tuple[int, int, int, int],
+        width: int = 1,
+    ) -> None:
+        pygame.draw.rect(self._surface, color, rect, width=width)
+
     def draw_text(
         self,
         text: str,
