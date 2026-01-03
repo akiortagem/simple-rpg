@@ -50,7 +50,7 @@ def test_default_route_moves_back_and_forth():
     player = make_pc("player")
     npc = make_npc("npc")
     controller = NPCController(npc=npc, speed=40.0)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.on_enter()
     scene.update(1.0)
@@ -68,7 +68,7 @@ def test_route_controller_moves_along_waypoints_and_loops():
     npc = make_npc("npc")
     route = NPCRoute(waypoints=[(10.0, 0.0), (10.0, 10.0)], loop=True, wait_time=0.0)
     controller = NPCController(npc=npc, route=route, speed=10.0)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.on_enter()
     scene.update(1.0)
@@ -88,7 +88,7 @@ def test_route_controller_respects_wait_time_at_waypoints():
     npc = make_npc("npc")
     route = NPCRoute(waypoints=[(5.0, 0.0)], loop=False, wait_time=0.5)
     controller = NPCController(npc=npc, route=route, speed=10.0)
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.on_enter()
     scene.update(0.5)
@@ -104,7 +104,7 @@ def test_empty_route_keeps_npc_stationary():
     player = make_pc("player")
     npc = make_npc("npc")
     controller = NPCController(npc=npc, route=NPCRoute(waypoints=()))
-    scene = MapScene(tilemap, tilemap, player, [controller])
+    scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
 
     scene.on_enter()
     scene.update(1.0)

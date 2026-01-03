@@ -278,9 +278,9 @@ class MapScene(Scene):
     def __init__(
         self,
         visual_tilemap: RenderableTilemapLayer,
-        object_tilemap: RenderableTilemapLayer | None = None,
         collision_tilemap: CollisionDetector | RenderableTilemapLayer,
         player: PCMapSprite,
+        object_tilemap: RenderableTilemapLayer | None = None,
         npc_controllers: Sequence[NPCMapController] | None = None,
     ) -> None:
         self.visual_tilemap = visual_tilemap
