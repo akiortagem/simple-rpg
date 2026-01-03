@@ -278,11 +278,13 @@ class MapScene(Scene):
     def __init__(
         self,
         visual_tilemap: RenderableTilemapLayer,
+        object_tilemap: RenderableTilemapLayer | None,
         collision_tilemap: CollisionDetector | RenderableTilemapLayer,
         player: PCMapSprite,
         npc_controllers: Sequence[NPCMapController] | None = None,
     ) -> None:
         self.visual_tilemap = visual_tilemap
+        self.object_tilemap = object_tilemap
         self.collision_tilemap = collision_tilemap
         self.player = player
         self.npc_controllers = list(npc_controllers or [])
@@ -358,6 +360,8 @@ class MapScene(Scene):
         camera_offset = self.camera.offset
 
         self.visual_tilemap.render(renderer, camera_offset=camera_offset)
+        if self.object_tilemap is not None:
+            self.object_tilemap.render(renderer, camera_offset=camera_offset)
         for sprite in sorted(
             self._all_sprites(),
             key=lambda item: item.render_order_y,
@@ -413,6 +417,7 @@ class MapSceneBase(MapScene, ABC):
         assets = build_map_scene_assets(definition)
         super().__init__(
             visual_tilemap=assets.visual_tilemap,
+            object_tilemap=assets.object_tilemap,
             collision_tilemap=assets.collision_tilemap,
             player=assets.player,
             npc_controllers=assets.npc_controllers,

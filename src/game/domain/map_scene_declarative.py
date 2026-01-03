@@ -61,6 +61,13 @@ class Map:
     to a tile in row-major order. ``None`` means no tile should be rendered for
     that cell; collision queries treat ``None`` as empty space. ``pc`` and
     ``npcs`` define the starting positions for the map entities.
+
+    Use ``object_tiles`` to supply a second tile layer (same dimensions as
+    ``tiles``) that is rendered after the base tiles but before sprites. Use
+    ``0`` in ``object_tiles`` for empty space, and provide an ``object_tilesheet``
+    describing the artwork. Any non-zero object tile IDs listed in
+    ``impassable_object_ids`` will block movement alongside
+    ``impassable_ids``.
     """
 
     tile_sheet: TileSheet
@@ -68,6 +75,9 @@ class Map:
     pc: MapPC
     npcs: Sequence[MapNPC] = field(default_factory=tuple)
     impassable_ids: set[int] = field(default_factory=set)
+    object_tiles: Sequence[Sequence[int]] | None = None
+    object_tilesheet: TileSheet | None = None
+    impassable_object_ids: set[int] = field(default_factory=set)
     tile_offsets: Sequence[Sequence[tuple[int, int] | None]] | None = None
 
 
@@ -76,6 +86,7 @@ class MapSceneAssets:
     """Imperative objects built from a declarative map definition."""
 
     visual_tilemap: TilemapLayer
+    object_tilemap: TilemapLayer | None
     collision_tilemap: TileCollisionDetector
     player: PCMapSprite
     npc_controllers: list[NPCController]
@@ -91,11 +102,12 @@ def build_map_scene_assets(definition: Map) -> MapSceneAssets:
         tile_offsets=definition.tile_offsets,
     )
 
-    collision_tiles = _normalize_collision_tiles(definition.tiles)
+    object_tilemap = _build_object_tilemap(definition)
+    collision_tiles = _build_collision_tiles(definition.tiles, definition)
     collision_map = Tilemap(
         tiles=collision_tiles,
         tile_size=(tileset.tile_width, tileset.tile_height),
-        impassable_ids=set(definition.impassable_ids),
+        impassable_ids={1},
     )
     collision_tilemap = TileCollisionDetector(tilemap=collision_map)
 
@@ -103,19 +115,56 @@ def build_map_scene_assets(definition: Map) -> MapSceneAssets:
     npc_controllers = [_build_npc_controller(npc) for npc in definition.npcs]
     return MapSceneAssets(
         visual_tilemap=visual_tilemap,
+        object_tilemap=object_tilemap,
         collision_tilemap=collision_tilemap,
         player=player,
         npc_controllers=npc_controllers,
     )
 
 
-def _normalize_collision_tiles(
+def _build_collision_tiles(
     tiles: Sequence[Sequence[int | None]],
+    definition: Map,
 ) -> list[list[int]]:
     normalized: list[list[int]] = []
-    for row in tiles:
-        normalized.append([tile if tile is not None else -1 for tile in row])
+    object_tiles = definition.object_tiles
+    for row_index, row in enumerate(tiles):
+        object_row = object_tiles[row_index] if object_tiles else None
+        normalized_row: list[int] = []
+        for column_index, tile in enumerate(row):
+            base_blocking = tile is not None and tile in definition.impassable_ids
+            object_tile = object_row[column_index] if object_row else 0
+            object_blocking = (
+                object_tile != 0 and object_tile in definition.impassable_object_ids
+            )
+            normalized_row.append(1 if base_blocking or object_blocking else -1)
+        normalized.append(normalized_row)
     return normalized
+
+
+def _build_object_tilemap(definition: Map) -> TilemapLayer | None:
+    if definition.object_tiles is None:
+        return None
+    if definition.object_tilesheet is None:
+        raise ValueError("object_tilesheet is required when object_tiles are provided")
+    _ensure_object_tiles_shape(definition.tiles, definition.object_tiles)
+    return TilemapLayer(
+        tileset=definition.object_tilesheet.to_descriptor(),
+        tiles=definition.object_tiles,
+    )
+
+
+def _ensure_object_tiles_shape(
+    tiles: Sequence[Sequence[int | None]],
+    object_tiles: Sequence[Sequence[int]],
+) -> None:
+    if len(tiles) != len(object_tiles):
+        raise ValueError("object_tiles must match the row count of tiles")
+    if tiles and object_tiles:
+        expected_columns = len(tiles[0])
+        for row in object_tiles:
+            if len(row) != expected_columns:
+                raise ValueError("object_tiles must match the column count of tiles")
 
 
 def _build_player(definition: MapPC) -> PCMapSprite:
