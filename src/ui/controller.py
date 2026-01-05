@@ -1,4 +1,8 @@
-"""UI controller for focus and input handling."""
+"""UI controller for focus and input handling.
+
+Use ``UIController`` to manage focus movement and selection in menu-driven UI
+scenes.
+"""
 
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ class UIController:
         self._has_focus = focused_index != 0
 
     def handle_events(self, events: Sequence[InputEvent], root: UIElement) -> None:
+        """Update focus/selection state based on input events."""
         menu = self._find_menu(root)
         if menu is None:
             return
@@ -40,6 +45,7 @@ class UIController:
                 menu.select(self.focused_index).activate()
 
     def apply(self, root: UIElement) -> UIElement:
+        """Return a UI tree with focus applied to menu selections."""
         return self._apply_focus(root)
 
     def _sync_focus(self, menu: Menu) -> None:

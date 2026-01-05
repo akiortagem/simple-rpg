@@ -1,4 +1,8 @@
-"""Declarative spritesheet definitions for map scenes."""
+"""Declarative spritesheet definitions for map scenes.
+
+Define ``SpriteSheet`` and ``SpriteSheetAnimations`` to describe animation
+frames without touching rendering code, then feed them into map declarations.
+"""
 
 from __future__ import annotations
 

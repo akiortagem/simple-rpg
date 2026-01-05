@@ -1,4 +1,8 @@
-"""Shared utilities for configuration and asset paths."""
+"""Shared utilities for configuration and asset paths.
+
+Use ``resolve_asset`` and ``resolve_config`` to create absolute paths to entries
+in the ``assets/`` and ``config/`` folders when loading files.
+"""
 
 from __future__ import annotations
 

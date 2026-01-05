@@ -1,4 +1,8 @@
-"""Asset loading utilities that hide framework-specific details."""
+"""Asset loading utilities that hide framework-specific details.
+
+Use ``load_image`` to resolve image assets for sprites and tiles while keeping
+pygame-specific handling localized to this module.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,7 @@
-"""Menu UI element."""
+"""Menu UI element.
+
+Use ``Menu`` to render selectable lists of ``MenuChoice`` items.
+"""
 
 from __future__ import annotations
 
@@ -12,17 +15,21 @@ from .menu_choice import MenuChoice
 
 @dataclass(frozen=True)
 class Menu:
+    """Selectable list of ``MenuChoice`` items with focus handling."""
+
     choices: Sequence[MenuChoice]
     spacing: int = 4
     selected_index: int = 0
     on_choose: Callable[[str | None], None] | None = None
 
     def select(self, index: int) -> "Menu":
+        """Return a new menu with the selected index clamped."""
         clamped = max(0, min(index, len(self.choices) - 1))
         return replace(self, selected_index=clamped)
 
     @property
     def selected_choice(self) -> MenuChoice | None:
+        """Return the currently selected choice, if any."""
         if not self.choices:
             return None
         if self.selected_index < 0 or self.selected_index >= len(self.choices):
@@ -30,6 +37,7 @@ class Menu:
         return self.choices[self.selected_index]
 
     def activate(self) -> None:
+        """Invoke selection callbacks for the current choice."""
         choice = self.selected_choice
         if not choice:
             return
@@ -50,10 +58,12 @@ class Menu:
         return tuple(resolved)
 
     def measure(self, bounds: Size) -> Size:
+        """Return the size needed to lay out the menu choices."""
         column = Column(self._resolved_choices(), spacing=self.spacing)
         return column.measure(bounds)
 
     def layout(self, bounds: Rect) -> LayoutNode:
+        """Return a layout node containing the resolved choices."""
         column = Column(self._resolved_choices(), spacing=self.spacing)
         column_node = column.layout(bounds)
         return LayoutNode(self, bounds, column_node.children)

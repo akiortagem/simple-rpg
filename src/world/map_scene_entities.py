@@ -1,4 +1,8 @@
-"""Stub entity builders for declarative map scenes."""
+"""Stub entity builders for declarative map scenes.
+
+Implement ``PC`` and ``NPC`` subclasses to customize how map declarations
+produce runtime sprites and NPC route behaviors.
+"""
 
 from __future__ import annotations
 

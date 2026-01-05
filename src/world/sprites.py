@@ -1,9 +1,12 @@
 """Sprite utilities for animating character entities.
 
-The spritesheet layout is assumed to be a grid of equally sized frames arranged
-row-by-row (left-to-right, then top-to-bottom). Frame indices count across rows
-in row-major order, so index 0 references the top-left frame and increments to
-the right before wrapping to the next row.
+Use ``normalize_animation_map`` and ``SpriteSheetDescriptor`` to prepare
+animations, then instantiate ``CharacterSprite`` or map-aware subclasses like
+``PCMapSprite`` and ``NPCMapSprite`` for runtime rendering. The spritesheet
+layout is assumed to be a grid of equally sized frames arranged row-by-row
+(left-to-right, then top-to-bottom). Frame indices count across rows in
+row-major order, so index 0 references the top-left frame and increments to the
+right before wrapping to the next row.
 """
 
 from __future__ import annotations

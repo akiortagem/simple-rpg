@@ -1,4 +1,8 @@
-"""Controllers for NPC behavior within a map scene."""
+"""Controllers for NPC behavior within a map scene.
+
+Use ``NPCController`` protocols to inject behavior into ``MapScene`` NPCs, and
+``NPCMapController`` to drive route-following characters.
+"""
 
 from __future__ import annotations
 

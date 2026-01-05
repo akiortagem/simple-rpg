@@ -1,4 +1,8 @@
-"""NPC patrol route helpers."""
+"""NPC patrol route helpers.
+
+Use ``NPCRoute`` and ``Route`` definitions (like ``LoopRoute``) to describe how
+NPCs should traverse waypoints within map scenes.
+"""
 
 from __future__ import annotations
 

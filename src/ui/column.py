@@ -1,4 +1,7 @@
-"""Column layout UI element."""
+"""Column layout UI element.
+
+Use ``Column`` to stack UI children vertically with spacing.
+"""
 
 from __future__ import annotations
 
@@ -10,10 +13,13 @@ from .base import LayoutNode, Rect, Size, UIElement
 
 @dataclass(frozen=True)
 class Column:
+    """Vertically stacks child UI elements with optional spacing."""
+
     contents: Sequence[UIElement]
     spacing: int = 0
 
     def measure(self, bounds: Size) -> Size:
+        """Return the layout size for the column within the given bounds."""
         total_height = 0
         for idx, child in enumerate(self.contents):
             if idx:
@@ -22,6 +28,7 @@ class Column:
         return Size(bounds.width, min(bounds.height, total_height))
 
     def layout(self, bounds: Rect) -> LayoutNode:
+        """Return a layout tree for the column and its children."""
         children: list[LayoutNode] = []
         cursor_y = bounds.y
         for idx, child in enumerate(self.contents):

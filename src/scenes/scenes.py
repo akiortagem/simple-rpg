@@ -1,4 +1,10 @@
-"""Scene abstractions and example implementation."""
+"""Scene abstractions and example implementation.
+
+This module defines the ``Scene`` base class along with ``UIScene`` and
+tilemap-focused ``MapScene``/``MapSceneBase`` helpers. It also contains
+``DemoScene`` for quick scaffolding and ``UIRenderer`` for turning UI layout
+trees into renderer commands.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,8 @@
-"""Tilemap utilities for rendering and collision queries."""
+"""Tilemap utilities for rendering and collision queries.
+
+Use ``Tilemap`` to represent tile ID grids and ``TileCollisionDetector`` to test
+movement hitboxes against collidable layers in map scenes.
+"""
 
 from __future__ import annotations
 

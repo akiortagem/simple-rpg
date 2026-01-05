@@ -1,4 +1,9 @@
-"""Declarative, immutable UI components and layout helpers."""
+"""Declarative, immutable UI components and layout helpers.
+
+Compose UI trees from ``UIElement`` implementations like ``Column``,
+``Container``, and ``Text``. Use ``UIController`` to translate input events into
+menu focus, and feed layouts into ``UIRenderer`` via ``UIScene``.
+"""
 
 from .base import LayoutNode, Rect, Size, UIElement, UIElements
 from .border import Border

@@ -1,4 +1,8 @@
-"""Foundational UI layout types."""
+"""Foundational UI layout types.
+
+Defines ``Size``, ``Rect``, ``LayoutNode``, and the ``UIElement`` protocol used
+by all declarative UI widgets.
+"""
 
 from __future__ import annotations
 

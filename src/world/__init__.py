@@ -1,4 +1,9 @@
-"""World and entity-related domain logic for Simple RPG."""
+"""World and entity-related domain logic for Simple RPG.
+
+Import map declarations (``Map``, ``MapPC``, ``MapNPC``), sprite helpers like
+``CharacterSprite``/``PCMapSprite``, and tilemap types such as ``TilemapLayer``
+from here when building map-driven scenes.
+"""
 
 from .map_scene_declarative import Map, MapNPC, MapPC, TileSheet
 from .map_scene_entities import NPC, PC

@@ -1,4 +1,8 @@
-"""Convenience helpers for wiring up Simple RPG with pygame infrastructure."""
+"""Convenience helpers for wiring up Simple RPG with pygame infrastructure.
+
+Call ``build_game`` to create a ready-to-run ``GameLoop`` using pygame-backed
+adapters, optionally providing a custom ``Scene``.
+"""
 
 from __future__ import annotations
 

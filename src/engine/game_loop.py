@@ -1,4 +1,10 @@
-"""Application-level game loop orchestrating domain and infrastructure."""
+"""Application-level game loop orchestrating domain and infrastructure.
+
+``GameLoop`` connects a ``SceneManager`` with framework adapters that implement
+``Renderer``, ``EventSource``, and ``TimeSource``. Call ``GameLoop.run`` to
+start the frame loop, which polls events, advances the active scene, and
+renders each frame.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +30,7 @@ class GameLoop:
         self._target_fps = target_fps
 
     def run(self) -> None:
+        """Run the main loop until a quit event or scene exit request."""
         running = True
         while running:
             event_batch = self._events.poll()
