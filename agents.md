@@ -17,3 +17,6 @@ Any type of evidences you can submit that you have achieved the 'Why'
 ```
 
 Your commits and PR title should also follow the semantic commit messages.
+
+### Tests
+With every new `feat` you must also introduce tests suite that covers said feature.
