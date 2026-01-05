@@ -302,6 +302,9 @@ class LayeredScene(Scene):
             active_renderer = renderer if index == 0 else overlay_renderer
             scene.render(active_renderer)
 
+    def should_exit(self) -> bool:
+        return self._exit_requested or any(scene.should_exit() for scene in self._scenes)
+
 
 class RenderableTilemapLayer(Protocol):
     """Renderable background or foreground tile layer."""

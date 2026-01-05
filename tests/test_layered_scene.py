@@ -124,3 +124,16 @@ def test_layered_scene_renders_bottom_to_top_with_overlay_clear_no_op():
         "top:render",
     ]
     assert renderer.clears == [(0, 0, 0)]
+
+
+def test_layered_scene_should_exit_when_child_requests_exit():
+    record: list[str] = []
+    top = StubScene("top", record)
+    bottom = StubScene("bottom", record)
+    layered = LayeredScene([top, bottom])
+
+    assert layered.should_exit() is False
+
+    bottom.request_exit()
+
+    assert layered.should_exit() is True
