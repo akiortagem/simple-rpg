@@ -12,8 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Protocol, Sequence, Set, Tuple
 
-from .contracts import Key, Renderer
-from .entities import Entity
+from ..core.contracts import Key, Renderer
+from ..core.entities import Entity
 
 AnimationMap = Dict[str, Dict[str, List[int]]]
 DEFAULT_DIRECTION_ORDER = ("down", "left", "right", "up")

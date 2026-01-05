@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..domain.contracts import EventSource, Renderer, TimeSource
+from ..core.contracts import EventSource, Renderer, TimeSource
 from .scene_manager import SceneManager
 
 

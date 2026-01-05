@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from .contracts import Renderer
+from ..core.contracts import Renderer
 
 
 @dataclass(frozen=True)

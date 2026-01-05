@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 
-from ..domain.contracts import GameConfig, InputEvent, Renderer
-from ..domain.scenes import Scene
+from ..core.contracts import GameConfig, InputEvent, Renderer
+from ..scenes.scenes import Scene
 
 
 class SceneManager:

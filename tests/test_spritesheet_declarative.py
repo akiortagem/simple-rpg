@@ -5,7 +5,7 @@ import pytest
 
 sys.path.append(os.path.abspath("."))
 
-from src.game.domain.spritesheet_declarative import SpriteSheetAnimations
+from src.world.spritesheet_declarative import SpriteSheetAnimations
 
 
 def test_animation_list_shorthand_converts_to_direction_map():

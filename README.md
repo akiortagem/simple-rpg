@@ -9,7 +9,7 @@ A simple rpg engine made in pygame with a lightweight clean architecture scaffol
 
 ```python
 from src.main import build_game
-from src.game.domain.scenes import Scene
+from src.scenes.scenes import Scene
 
 class MyScene(Scene):
     ...

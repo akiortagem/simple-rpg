@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Sequence
 
-from ..contracts import InputEvent, Key
+from ..core.contracts import InputEvent, Key
 from .base import UIElement
 from .column import Column
 from .container import Container

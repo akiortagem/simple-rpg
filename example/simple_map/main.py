@@ -12,13 +12,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.game.domain.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
-from src.game.domain.map_scene_entities import NPC, PC
-from src.game.domain.npc_routes import NPCRoute, Route
-from src.game.domain.scenes import MapSceneBase
-from src.game.domain.sprites import PCMapSprite
-from src.game.domain.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
-from src.game.domain.ui_kit import Dialog
+from src.scenes.scenes import MapSceneBase
+from src.ui import Dialog
+from src.world.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
+from src.world.map_scene_entities import NPC, PC
+from src.world.npc_routes import NPCRoute, Route
+from src.world.sprites import PCMapSprite
+from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.main import build_game
 
 ASSETS_DIR = Path(__file__).parent / "assets"

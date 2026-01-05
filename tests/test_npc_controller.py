@@ -5,12 +5,12 @@ import pytest
 
 sys.path.append(os.path.abspath("."))
 
-from src.game.domain.contracts import InputEvent, Key
-from src.game.domain.map_scene_entities import NPC
-from src.game.domain.npc_controller import NPCRoute, NPCController
-from src.game.domain.scenes import MapScene
-from src.game.domain.sprites import PCMapSprite, SpriteSheetDescriptor
-from src.game.domain.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
+from src.core.contracts import InputEvent, Key
+from src.scenes.scenes import MapScene
+from src.world.map_scene_entities import NPC
+from src.world.npc_controller import NPCRoute, NPCController
+from src.world.sprites import PCMapSprite, SpriteSheetDescriptor
+from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 
 
 class FakeTilemap:

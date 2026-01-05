@@ -4,7 +4,7 @@ The `GameLoop` class in `src/game/application/game_loop.py` coordinates event po
 
 ```python
 from src.main import build_game
-from src.game.domain.scenes import DemoScene
+from src.scenes.scenes import DemoScene
 
 game = build_game(initial_scene=DemoScene())
 game.run()

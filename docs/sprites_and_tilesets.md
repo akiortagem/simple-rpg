@@ -7,7 +7,7 @@ Sprites and tilesets describe how to slice images so the renderer can draw frame
 `CharacterSprite` and its map-aware subclasses (`PCMapSprite`, `NPCMapSprite`) use `SpriteSheetDescriptor` to describe a spritesheet grid:
 
 ```python
-from src.game.domain.sprites import PCMapSprite, SpriteSheetDescriptor
+from src.world.sprites import PCMapSprite, SpriteSheetDescriptor
 
 player_sheet = SpriteSheetDescriptor(
     image="assets/player.png",
@@ -35,7 +35,7 @@ player = PCMapSprite(x=100, y=100, spritesheet=player_sheet, speed=150)
 `TilesetDescriptor` describes a tileset image for `TilemapLayer` to render:
 
 ```python
-from src.game.domain.tilemap_layer import TilesetDescriptor
+from src.world.tilemap_layer import TilesetDescriptor
 
 tileset = TilesetDescriptor(
     image="assets/tileset.png",
@@ -48,7 +48,7 @@ tileset = TilesetDescriptor(
 `TilemapLayer` accepts a 2D sequence of tile IDs. Each ID references a tile in the tileset grid (row-major order), while `None` or negative values skip drawing. Provide optional `tile_offsets` with per-cell `(dx, dy)` tuples to nudge placements, useful for tall tiles like trees. For convenience, the `parse_tilemap` helper converts 1-based tile IDs (common in editors) into the 0-based indices expected by the renderer; `0` values are treated as empty and converted to `-1`.
 
 ```python
-from src.game.domain.tilemap_parser import parse_tilemap
+from src.io.tilemap_parser import parse_tilemap
 
 tile_rows = parse_tilemap(tilemap_file="assets/tilemap.txt")
 ```

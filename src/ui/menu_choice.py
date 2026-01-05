@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from ..contracts import Color
+from ..core.contracts import Color
 from .base import LayoutNode, Rect, Size
 
 
