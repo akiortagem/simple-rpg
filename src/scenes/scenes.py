@@ -209,6 +209,103 @@ class DemoScene(Scene):
         renderer.draw_rect((200, 220, 255), rect)
 
 
+class _OverlayRenderer:
+    """Renderer proxy that disables clear calls for overlay scenes."""
+
+    def __init__(self, renderer: Renderer) -> None:
+        self._renderer = renderer
+
+    @property
+    def size(self) -> tuple[int, int]:
+        return self._renderer.size
+
+    def clear(self, color: Color) -> None:
+        return None
+
+    def draw_rect(self, color: Color, rect: tuple[int, int, int, int]) -> None:
+        self._renderer.draw_rect(color, rect)
+
+    def draw_rect_outline(
+        self,
+        color: Color,
+        rect: tuple[int, int, int, int],
+        width: int = 1,
+    ) -> None:
+        self._renderer.draw_rect_outline(color, rect, width=width)
+
+    def draw_image(
+        self,
+        image: object,
+        source_rect: tuple[int, int, int, int],
+        destination: tuple[int, int],
+    ) -> None:
+        self._renderer.draw_image(image, source_rect, destination)
+
+    def draw_text(
+        self,
+        text: str,
+        position: tuple[int, int],
+        color: Color,
+        font_size: int = 32,
+        center: bool = False,
+    ) -> None:
+        self._renderer.draw_text(
+            text,
+            position,
+            color,
+            font_size=font_size,
+            center=center,
+        )
+
+    def present(self) -> None:
+        self._renderer.present()
+
+
+class LayeredScene(Scene):
+    """Compose multiple scenes as layers.
+
+    The ``scenes`` sequence is ordered top-to-bottom, so the last scene is the
+    bottom layer. Input events and updates are forwarded to every scene in the
+    provided order, while rendering happens from bottom-to-top so upper scenes
+    overlay earlier layers. Only the bottom scene receives a real renderer; all
+    overlay scenes get a renderer proxy whose ``clear`` method is a no-op to
+    prevent wiping the canvas.
+    """
+
+    def __init__(self, scenes: Sequence[Scene]) -> None:
+        self._scenes = list(scenes)
+        self._overlay_renderer: _OverlayRenderer | None = None
+
+    def on_enter(self) -> None:
+        for scene in self._scenes:
+            scene.config = self.config
+            scene.on_enter()
+
+    def on_exit(self) -> None:
+        for scene in self._scenes:
+            scene.on_exit()
+
+    def handle_events(self, events: Sequence[InputEvent]) -> None:
+        for scene in self._scenes:
+            scene.handle_events(events)
+
+    def update(self, delta_time: float) -> None:
+        for scene in self._scenes:
+            scene.update(delta_time)
+
+    def render(self, renderer: Renderer) -> None:
+        if not self._scenes:
+            return None
+        overlay_renderer = self._overlay_renderer or _OverlayRenderer(renderer)
+        self._overlay_renderer = overlay_renderer
+        for index, scene in enumerate(reversed(self._scenes)):
+            active_renderer = renderer if index == 0 else overlay_renderer
+            scene.render(active_renderer)
+
+    def should_exit(self) -> bool:
+        return self._exit_requested or any(scene.should_exit() for scene in self._scenes)
+
+
 class RenderableTilemapLayer(Protocol):
     """Renderable background or foreground tile layer."""
 
