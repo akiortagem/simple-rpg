@@ -72,13 +72,15 @@ IDLE_SPRITESHEET = SpriteSheet(
 
 MAP_SIZE = 10
 
-HITBOX_SIZE = (20, 32)
+HITBOX_SIZE = (25, 25)
+HITBOX_OFFSET = (20, 43)
 
 
 class PlayerPC(PC):
     name = "Player"
     speed = 140.0
     hitbox_size = HITBOX_SIZE
+    hitbox_offset = HITBOX_OFFSET
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,7 @@ class PatrolRoute(Route):
 
 class PatrollingNPC(NPC):
     hitbox_size = HITBOX_SIZE
+    hitbox_offset = HITBOX_OFFSET
 
     def patrol(self) -> Route | None:
         return PatrolRoute(span=1 * TILE_SIZE)
@@ -113,6 +116,7 @@ class PatrollingNPC(NPC):
 
 class IdleNPC(NPC):
     hitbox_size = HITBOX_SIZE
+    hitbox_offset = HITBOX_OFFSET
 
     def patrol(self) -> Route | None:
         return NPCRoute(waypoints=(), loop=True, wait_time=0.0)
@@ -141,7 +145,10 @@ class SimpleMapScene(MapSceneBase):
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
-            [7, 7, 1, 7, 7, 56, 7, 7, 7, 7],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
@@ -162,9 +169,12 @@ class SimpleMapScene(MapSceneBase):
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 8, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 24, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [7, 0, 7, 7, 7, 7, 7, 7, 7, 7],
+            [23, 0, 23, 23, 23, 23, 23, 23, 23, 23],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 7, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 23, 0, 0],
         ]
 
         object_tilesheet = TileSheet(
@@ -174,7 +184,7 @@ class SimpleMapScene(MapSceneBase):
             columns=16,
         )
 
-        impassable_object_ids={8, 24}
+        impassable_object_ids={23}
 
         return Map(
             tile_sheet=tile_sheet,
@@ -192,7 +202,7 @@ class SimpleMapScene(MapSceneBase):
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
-                    starting=(2 * TILE_SIZE, 7 * TILE_SIZE),
+                    starting=(14, 2),
                     npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),
@@ -204,7 +214,7 @@ class SimpleMapScene(MapSceneBase):
 
 def main() -> None:
     scene = SimpleMapScene()
-    game = build_game(title="Simple RPG - Simple Map", initial_scene=scene)
+    game = build_game(title="Simple RPG - Simple Map", initial_scene=scene, debug_collision=True)
     game.run()
 
 
