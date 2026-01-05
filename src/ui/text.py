@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..contracts import Color
+from ..core.contracts import Color
 from .base import LayoutNode, Rect, Size
 
 

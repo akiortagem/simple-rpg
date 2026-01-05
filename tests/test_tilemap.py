@@ -5,7 +5,7 @@ import pytest
 
 sys.path.append(os.path.abspath("."))
 
-from src.game.domain.tilemap import TileCollisionDetector, Tilemap
+from src.world.tilemap import TileCollisionDetector, Tilemap
 
 
 def test_tilemap_reports_pixel_size_and_impassable_cells():

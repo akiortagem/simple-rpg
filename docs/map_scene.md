@@ -3,11 +3,11 @@
 The `MapScene` class orchestrates tile layers, collision detection, and characters. Provide at least one renderable tilemap and a player sprite; optional NPC controllers can join the scene.
 
 ```python
-from src.game.domain.scenes import MapScene
-from src.game.domain.tilemap_layer import TilemapLayer, TilesetDescriptor
-from src.game.domain.tilemap_parser import parse_tilemap
-from src.game.domain.tilemap import Tilemap, TileCollisionDetector
-from src.game.domain.sprites import PCMapSprite, SpriteSheetDescriptor
+from src.io.tilemap_parser import parse_tilemap
+from src.scenes.scenes import MapScene
+from src.world.sprites import PCMapSprite, SpriteSheetDescriptor
+from src.world.tilemap import Tilemap, TileCollisionDetector
+from src.world.tilemap_layer import TilemapLayer, TilesetDescriptor
 ```
 
 ## Visual and collision layers

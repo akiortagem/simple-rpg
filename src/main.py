@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pygame
 
-from src.game.application.game_loop import GameLoop
-from src.game.application.scene_manager import SceneManager
-from src.game.domain.contracts import GameConfig
-from src.game.domain.scenes import DemoScene, Scene
-from src.game.infrastructure.pygame_adapter import (
+from src.core.contracts import GameConfig
+from src.engine.game_loop import GameLoop
+from src.engine.scene_manager import SceneManager
+from src.io.pygame_adapter import (
     PygameClock,
     PygameEventSource,
     PygameRenderer,
 )
+from src.scenes.scenes import DemoScene, Scene
 
 
 def build_game(

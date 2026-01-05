@@ -6,12 +6,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Protocol, Sequence
 
-from .contracts import Color, GameConfig, InputEvent, Key, Renderer
-from .map_scene_declarative import DebugCollisionLayer, Map, build_map_scene_assets
-from .npc_controller import NPCMapController
-from .sprites import NPCMapSprite, PCMapSprite, CollisionDetector
-from .tilemap_layer import TilemapLayer
-from .ui_kit import (
+from ..core.contracts import Color, GameConfig, InputEvent, Key, Renderer
+from ..world.map_scene_declarative import DebugCollisionLayer, Map, build_map_scene_assets
+from ..world.npc_controller import NPCMapController
+from ..world.sprites import NPCMapSprite, PCMapSprite, CollisionDetector
+from ..world.tilemap_layer import TilemapLayer
+from ..ui import (
     Border,
     Container,
     LayoutNode,

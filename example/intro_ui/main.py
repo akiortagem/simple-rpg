@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from src.game.domain.contracts import Color
-from src.game.domain.scenes import UIScene
-from src.game.domain.ui_kit import *
+from src.core.contracts import Color
+from src.scenes.scenes import UIScene
+from src.ui import *
 from src.main import build_game
 
 

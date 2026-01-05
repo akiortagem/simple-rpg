@@ -16,7 +16,7 @@ Follow these steps to install dependencies and prepare a project that uses Simpl
 
 ```python
 from src.main import build_game
-from src.game.domain.scenes import Scene
+from src.scenes.scenes import Scene
 
 class MyScene(Scene):
     def update(self, delta_time: float) -> None:

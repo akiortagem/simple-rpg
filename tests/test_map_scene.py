@@ -5,11 +5,11 @@ import pytest
 
 sys.path.append(os.path.abspath("."))
 
-from src.game.domain.contracts import InputEvent, Key
-from src.game.domain.npc_controller import NPCMapController
-from src.game.domain.scenes import MapScene
-from src.game.domain.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
-from src.game.domain.tilemap_layer import TilemapLayer, TilesetDescriptor
+from src.core.contracts import InputEvent, Key
+from src.scenes.scenes import MapScene
+from src.world.npc_controller import NPCMapController
+from src.world.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
+from src.world.tilemap_layer import TilemapLayer, TilesetDescriptor
 
 
 class FakeRenderer:

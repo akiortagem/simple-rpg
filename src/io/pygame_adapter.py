@@ -7,7 +7,7 @@ from typing import Sequence
 
 import pygame
 
-from ..domain.contracts import Color, EventSource, InputEvent, Key, Renderer, TimeSource
+from ..core.contracts import Color, EventSource, InputEvent, Key, Renderer, TimeSource
 from .assets import load_image
 
 

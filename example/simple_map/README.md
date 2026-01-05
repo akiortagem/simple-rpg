@@ -16,7 +16,7 @@ python -m example.simple_map.main
 Use `parse_tilemap` to turn a multiline string or file into a 2D grid. Visual tilemaps accept 1-based IDs that are converted to 0-based indices automatically, while collision grids can keep `0/1` values intact.
 
 ```python
-from src.game.domain.tilemap_parser import parse_tilemap
+from src.io.tilemap_parser import parse_tilemap
 
 visual_tiles = parse_tilemap(
     tilemap=\"\"\"
