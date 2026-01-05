@@ -1,4 +1,8 @@
-"""Renderable tilemap layer implementation."""
+"""Renderable tilemap layer implementation.
+
+Create ``TilemapLayer`` instances with a ``TilesetDescriptor`` to render a
+``Tilemap`` using the engine's renderer.
+"""
 
 from __future__ import annotations
 

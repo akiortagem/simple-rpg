@@ -1,4 +1,7 @@
-"""Dialog helpers for NPC interactions."""
+"""Dialog helpers for NPC interactions.
+
+Use ``Dialog`` to render conversational UI blocks inside scenes.
+"""
 
 from __future__ import annotations
 
@@ -13,4 +16,3 @@ class Dialog:
         """Display the dialog text."""
 
         print(self.message)
-

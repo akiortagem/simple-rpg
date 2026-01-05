@@ -1,4 +1,10 @@
-"""Domain-level contracts to decouple game logic from frameworks."""
+"""Domain-level contracts to decouple game logic from frameworks.
+
+Implement ``Renderer``, ``EventSource``, and ``TimeSource`` in infrastructure
+adapters (for example, ``PygameRenderer``) and pass those implementations into
+``GameLoop``. Use ``InputEvent`` and ``Key`` to keep input handling framework-
+agnostic, and ``GameConfig`` for shared feature flags like collision debugging.
+"""
 
 from __future__ import annotations
 

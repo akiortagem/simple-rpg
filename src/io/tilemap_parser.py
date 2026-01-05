@@ -1,4 +1,8 @@
-"""Helpers for parsing tilemap text assets."""
+"""Helpers for parsing tilemap text assets.
+
+Use ``parse_tilemap`` to turn text-based tilemap definitions into 2D integer
+grids suitable for ``Tilemap`` and ``TilemapLayer`` initialization.
+"""
 
 from __future__ import annotations
 

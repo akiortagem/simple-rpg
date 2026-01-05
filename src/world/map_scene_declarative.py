@@ -1,4 +1,9 @@
-"""Declarative map scene definitions and builders."""
+"""Declarative map scene definitions and builders.
+
+Define ``Map``, ``MapPC``, ``MapNPC``, and ``TileSheet`` data objects here, then
+call ``build_map_scene_assets`` to turn them into runtime sprites and
+``TilemapLayer`` instances for ``MapScene``.
+"""
 
 from __future__ import annotations
 

@@ -1,7 +1,9 @@
 """Domain entities for the Simple RPG.
 
 These classes purposefully avoid framework-specific details so they can be reused
-across different presentation technologies.
+across different presentation technologies. Subclass ``Entity`` for simple
+positioned objects and override ``Entity.update`` to participate in the game
+loop without binding to a specific renderer.
 """
 
 from __future__ import annotations

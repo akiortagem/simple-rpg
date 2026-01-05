@@ -1,4 +1,9 @@
-"""Pygame infrastructure adapters implementing domain contracts."""
+"""Pygame infrastructure adapters implementing domain contracts.
+
+Use ``PygameRenderer``, ``PygameEventSource``, and ``PygameClock`` to satisfy
+the core ``Renderer``, ``EventSource``, and ``TimeSource`` protocols when
+bootstrapping the engine in ``build_game`` or custom setups.
+"""
 
 from __future__ import annotations
 
