@@ -11,6 +11,7 @@ from typing import Sequence
 
 from ..core.contracts import InputEvent, Key
 from .base import UIElement
+from .center import Center
 from .column import Column
 from .container import Container
 from .menu import Menu
@@ -63,6 +64,8 @@ class UIController:
             return element.select(self.focused_index)
         if isinstance(element, Container) and element.content:
             return replace(element, content=self._apply_focus(element.content))
+        if isinstance(element, Center) and element.content:
+            return replace(element, content=self._apply_focus(element.content))
         if isinstance(element, Column):
             return replace(
                 element,
@@ -74,6 +77,8 @@ class UIController:
         if isinstance(element, Menu):
             return element
         if isinstance(element, Container) and element.content:
+            return self._find_menu(element.content)
+        if isinstance(element, Center) and element.content:
             return self._find_menu(element.content)
         if isinstance(element, Column):
             for child in element.contents:
