@@ -157,3 +157,19 @@ def test_overlay_scene_exits_after_update():
     manager.handle_events([])
 
     assert calls == ["events:base"]
+
+
+def test_overlay_exit_request_sets_manager_exit_flag():
+    base = OrderedScene("base", [])
+    overlay = StubScene("overlay")
+    manager = SceneManager(initial_scene=base)
+
+    manager.push_overlay(overlay)
+    overlay.request_exit()
+
+    assert manager.should_exit() is True
+
+    manager.update(0.1)
+
+    assert overlay.exited is True
+    assert manager.should_exit() is True

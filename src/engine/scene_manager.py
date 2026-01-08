@@ -24,6 +24,7 @@ class SceneManager:
         self._current_scene: Scene | None = None
         self._overlay_scenes: list[Scene] = []
         self._config = config or GameConfig()
+        self._exit_requested = False
         if initial_scene is not None:
             self.set_scene(initial_scene)
 
@@ -44,6 +45,7 @@ class SceneManager:
             self._current_scene.on_exit()
         scene.config = self._config
         self._current_scene = scene
+        self._exit_requested = False
         self._current_scene.on_enter()
 
     def push_overlay(self, scene: Scene) -> None:
@@ -65,6 +67,14 @@ class SceneManager:
         while self._overlay_scenes:
             scene = self._overlay_scenes.pop()
             scene.on_exit()
+
+    def should_exit(self) -> bool:
+        """Return whether any active scene requested exiting the game loop."""
+        if self._exit_requested:
+            return True
+        if self._current_scene is not None and self._current_scene.should_exit():
+            return True
+        return any(scene.should_exit() for scene in self._overlay_scenes)
 
     def _active_scene(self) -> Scene | None:
         if self._current_scene is None:
@@ -90,6 +100,7 @@ class SceneManager:
             remaining: list[Scene] = []
             for scene in self._overlay_scenes:
                 if scene.should_exit():
+                    self._exit_requested = True
                     scene.on_exit()
                 else:
                     remaining.append(scene)
