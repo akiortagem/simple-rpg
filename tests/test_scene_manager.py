@@ -62,6 +62,27 @@ class StubScene(Scene):
         self.rendered_with.append(renderer)
 
 
+class OrderedScene(Scene):
+    def __init__(self, name: str, calls: list[str]) -> None:
+        self.name = name
+        self.calls = calls
+
+    def handle_events(self, events):
+        self.calls.append(f"events:{self.name}")
+
+    def update(self, delta_time: float) -> None:
+        self.calls.append(f"update:{self.name}")
+
+    def render(self, renderer: Renderer) -> None:
+        return None
+
+
+class ExitScene(StubScene):
+    def update(self, delta_time: float) -> None:
+        super().update(delta_time)
+        self.request_exit()
+
+
 def test_set_scene_triggers_lifecycle_and_assigns_config():
     config = GameConfig(debug_collision=True)
     first = StubScene("first")
@@ -92,3 +113,47 @@ def test_scene_manager_forwards_events_update_and_render():
     assert scene.events == events
     assert scene.updated == [0.25]
     assert scene.rendered_with == [renderer]
+
+
+def test_overlay_scenes_receive_config_and_are_ordered():
+    config = GameConfig()
+    calls: list[str] = []
+    base = OrderedScene("base", calls)
+    overlay_one = OrderedScene("overlay_one", calls)
+    overlay_two = OrderedScene("overlay_two", calls)
+    manager = SceneManager(initial_scene=base, config=config)
+
+    manager.push_overlay(overlay_one)
+    manager.push_overlay(overlay_two)
+
+    assert overlay_one.config is config
+    assert overlay_two.config is config
+
+    manager.handle_events([])
+    manager.update(0.5)
+
+    assert calls == [
+        "events:overlay_two",
+        "events:overlay_one",
+        "events:base",
+        "update:overlay_two",
+        "update:overlay_one",
+        "update:base",
+    ]
+
+
+def test_overlay_scene_exits_after_update():
+    calls: list[str] = []
+    base = OrderedScene("base", calls)
+    overlay = ExitScene("overlay")
+    manager = SceneManager(initial_scene=base)
+
+    manager.push_overlay(overlay)
+    manager.update(0.1)
+
+    assert overlay.exited is True
+
+    calls.clear()
+    manager.handle_events([])
+
+    assert calls == ["events:base"]
