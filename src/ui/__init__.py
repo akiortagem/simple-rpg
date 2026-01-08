@@ -16,7 +16,6 @@ from .menu import Menu
 from .menu_choice import MenuChoice
 from .spacing import Spacing
 from .text import Text
-from .utils import spawn_ui
 
 __all__ = [
     "Border",
@@ -34,5 +33,4 @@ __all__ = [
     "UIController",
     "UIElement",
     "UIElements",
-    "spawn_ui",
 ]

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.scenes.scenes import MapSceneBase
-from src.ui import spawn_ui
+from src.scenes.utils import spawn_ui
 from src.world.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
 from src.world.map_scene_entities import NPC, PC
 from src.world.npc_routes import NPCRoute, Route
