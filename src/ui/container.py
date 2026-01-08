@@ -19,19 +19,30 @@ class Container:
     background_color: Color = (0, 0, 0)
     border: Border | None = None
     content: UIElement | None = None
+    width: int | None = None
+    height: int | None = None
 
     def measure(self, bounds: Size) -> Size:
-        """Return the bounds unchanged for container sizing."""
-        return bounds
+        """Return the preferred size for the container within bounds."""
+        width = self.width if self.width is not None else bounds.width
+        height = self.height if self.height is not None else bounds.height
+        return Size(min(width, bounds.width), min(height, bounds.height))
 
     def layout(self, bounds: Rect) -> LayoutNode:
         """Return a layout tree including border and content."""
+        measured_size = self.measure(bounds.size)
+        layout_bounds = Rect(
+            bounds.x,
+            bounds.y,
+            measured_size.width,
+            measured_size.height,
+        )
         children: list[LayoutNode] = []
         if self.border:
-            children.append(self.border.layout(bounds))
-            inner_bounds = bounds.inset(self.border.width)
+            children.append(self.border.layout(layout_bounds))
+            inner_bounds = layout_bounds.inset(self.border.width)
         else:
-            inner_bounds = bounds
+            inner_bounds = layout_bounds
         if self.content:
             children.append(self.content.layout(inner_bounds))
-        return LayoutNode(self, bounds, tuple(children))
+        return LayoutNode(self, layout_bounds, tuple(children))
