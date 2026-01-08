@@ -43,6 +43,13 @@ def test_container_measure_prefers_explicit_size():
     assert container.measure(Size(20, 20)) == Size(12, 8)
 
 
+def test_container_measure_defaults_to_bounds():
+    child = FixedElement(Size(4, 2))
+    container = Container(content=child)
+
+    assert container.measure(Size(20, 15)) == Size(20, 15)
+
+
 def test_center_layout_uses_container_measure():
     container = Container(width=10, height=6)
     center = Center(container)

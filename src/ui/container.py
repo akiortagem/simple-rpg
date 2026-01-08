@@ -24,9 +24,8 @@ class Container:
 
     def measure(self, bounds: Size) -> Size:
         """Return the preferred size for the container within bounds."""
-        content_size = self.content.measure(bounds) if self.content else bounds
-        width = self.width if self.width is not None else content_size.width
-        height = self.height if self.height is not None else content_size.height
+        width = self.width if self.width is not None else bounds.width
+        height = self.height if self.height is not None else bounds.height
         return Size(min(width, bounds.width), min(height, bounds.height))
 
     def layout(self, bounds: Rect) -> LayoutNode:
