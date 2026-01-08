@@ -30,6 +30,9 @@ class RecordingSceneManager:
     def render(self, renderer: Renderer) -> None:
         self._order.append("render")
 
+    def should_exit(self) -> bool:
+        return self.current_scene.should_exit()
+
 
 @dataclass
 class RecordingRenderer(Renderer):
