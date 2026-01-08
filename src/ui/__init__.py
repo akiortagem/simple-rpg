@@ -7,6 +7,7 @@ menu focus, and feed layouts into ``UIRenderer`` via ``UIScene``.
 
 from .base import LayoutNode, Rect, Size, UIElement, UIElements
 from .border import Border
+from .center import Center
 from .column import Column
 from .container import Container
 from .controller import UIController
@@ -18,6 +19,7 @@ from .text import Text
 
 __all__ = [
     "Border",
+    "Center",
     "Column",
     "Container",
     "Dialog",
