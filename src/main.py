@@ -49,9 +49,7 @@ def build_game(
     events = PygameEventSource()
     clock = PygameClock()
 
-    scene_manager = SceneManager(
-        initial_scene or DemoScene(),
-        config=GameConfig(debug_collision=debug_collision),
-    )
+    scene_manager = SceneManager(config=GameConfig(debug_collision=debug_collision))
     register_scene_manager(scene_manager)
+    scene_manager.set_scene(initial_scene or DemoScene())
     return GameLoop(scene_manager=scene_manager, renderer=renderer, events=events, clock=clock)
