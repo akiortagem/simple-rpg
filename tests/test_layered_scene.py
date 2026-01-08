@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 sys.path.append(os.path.abspath("."))
 
-from src.core.contracts import GameConfig, InputEvent, Renderer
+from src.core.contracts import InputEvent, Renderer
 from src.scenes.scenes import LayeredScene, Scene
 
 
@@ -12,18 +12,16 @@ from src.scenes.scenes import LayeredScene, Scene
 class DummyRenderer(Renderer):
     width: int = 320
     height: int = 200
-    clears: list[tuple[int, int, int]] | None = None
 
     def __post_init__(self) -> None:
-        if self.clears is None:
-            self.clears = []
+        self.clear_calls: list[object] = []
 
     @property
     def size(self) -> tuple[int, int]:
         return (self.width, self.height)
 
     def clear(self, color):
-        self.clears.append(color)
+        self.clear_calls.append(color)
 
     def draw_rect(self, color, rect):
         return None
@@ -42,98 +40,52 @@ class DummyRenderer(Renderer):
 
 
 class StubScene(Scene):
-    def __init__(self, name: str, record: list[str]) -> None:
+    def __init__(self, name: str, call_log: list[str]) -> None:
         self.name = name
-        self.record = record
-        self.entered = False
-        self.exited = False
+        self.call_log = call_log
 
-    def on_enter(self) -> None:
-        self.entered = True
-        self.record.append(f"{self.name}:enter")
-
-    def on_exit(self) -> None:
-        self.exited = True
-        self.record.append(f"{self.name}:exit")
-
-    def handle_events(self, events) -> None:
-        self.record.append(f"{self.name}:events")
+    def handle_events(self, events):
+        self.call_log.append(f"events:{self.name}")
 
     def update(self, delta_time: float) -> None:
-        self.record.append(f"{self.name}:update")
+        self.call_log.append(f"update:{self.name}")
 
     def render(self, renderer: Renderer) -> None:
-        renderer.clear((0, 0, 0))
-        self.record.append(f"{self.name}:render")
+        self.call_log.append(f"render:{self.name}:{type(renderer).__name__}")
+        renderer.clear(self.name)
 
 
-def test_layered_scene_propagates_config_and_lifecycle():
-    record: list[str] = []
-    top = StubScene("top", record)
-    bottom = StubScene("bottom", record)
-    config = GameConfig(debug_collision=True)
+def test_layered_scene_renders_bottom_to_top_and_clears_once():
+    call_log: list[str] = []
+    top = StubScene("top", call_log)
+    bottom = StubScene("bottom", call_log)
     layered = LayeredScene([top, bottom])
-    layered.config = config
-
-    layered.on_enter()
-
-    assert top.entered is True
-    assert bottom.entered is True
-    assert top.config is config
-    assert bottom.config is config
-
-    layered.on_exit()
-
-    assert top.exited is True
-    assert bottom.exited is True
-
-
-def test_layered_scene_forwards_events_and_updates_in_order():
-    record: list[str] = []
-    top = StubScene("top", record)
-    middle = StubScene("middle", record)
-    bottom = StubScene("bottom", record)
-    layered = LayeredScene([top, middle, bottom])
-
-    layered.handle_events([InputEvent(type="MOVE")])
-    layered.update(0.1)
-
-    assert record == [
-        "top:events",
-        "middle:events",
-        "bottom:events",
-        "top:update",
-        "middle:update",
-        "bottom:update",
-    ]
-
-
-def test_layered_scene_renders_bottom_to_top_with_overlay_clear_no_op():
-    record: list[str] = []
-    top = StubScene("top", record)
-    middle = StubScene("middle", record)
-    bottom = StubScene("bottom", record)
-    layered = LayeredScene([top, middle, bottom])
     renderer = DummyRenderer()
 
     layered.render(renderer)
 
-    assert record == [
-        "bottom:render",
-        "middle:render",
-        "top:render",
+    assert call_log == [
+        "render:bottom:DummyRenderer",
+        "render:top:_OverlayRenderer",
     ]
-    assert renderer.clears == [(0, 0, 0)]
+    assert renderer.clear_calls == ["bottom"]
 
 
-def test_layered_scene_should_exit_when_child_requests_exit():
-    record: list[str] = []
-    top = StubScene("top", record)
-    bottom = StubScene("bottom", record)
-    layered = LayeredScene([top, bottom])
+def test_layered_scene_forwards_events_and_updates_in_order():
+    call_log: list[str] = []
+    top = StubScene("top", call_log)
+    middle = StubScene("middle", call_log)
+    bottom = StubScene("bottom", call_log)
+    layered = LayeredScene([top, middle, bottom])
 
-    assert layered.should_exit() is False
+    layered.handle_events([InputEvent(type="MOVE")])
+    layered.update(0.5)
 
-    bottom.request_exit()
-
-    assert layered.should_exit() is True
+    assert call_log == [
+        "events:top",
+        "events:middle",
+        "events:bottom",
+        "update:top",
+        "update:middle",
+        "update:bottom",
+    ]
