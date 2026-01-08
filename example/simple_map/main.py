@@ -21,7 +21,7 @@ from src.world.sprites import PCMapSprite
 from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.main import build_game
 
-ASSETS_DIR = Path(__file__).parent / "assets"
+ASSETS_DIR = Path(__file__).parent.parent / "common_assets"
 TILE_SIZE = 32
 SPRITE_TILE_SIZE = 64
 
