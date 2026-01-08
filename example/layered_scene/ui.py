@@ -15,10 +15,12 @@ class SimpleOverlayUI(UIScene):
         super().__init__()
     
     def build(self) -> UIElement:
-        return Container(
-            background_color=self.background_color,
-            border=Border(color=(32, 40, 68), width=2),
-            width=100,
-            height=100,
-            content=Text('Overlay', color=(235, 239, 255), size=24, center=True)
+        return Center(
+            content=Container(
+                background_color=self.background_color,
+                border=Border(color=(32, 40, 68), width=2),
+                width=100,
+                height=100,
+                content=Text('Overlay', color=(235, 239, 255), size=24, center=True)
+            )
         )
