@@ -14,6 +14,7 @@ from .controller import UIController
 from .dialog import Dialog
 from .menu import Menu
 from .menu_choice import MenuChoice
+from .positioned import Positioned
 from .spacing import Spacing
 from .text import Text
 
@@ -26,6 +27,7 @@ __all__ = [
     "LayoutNode",
     "Menu",
     "MenuChoice",
+    "Positioned",
     "Rect",
     "Size",
     "Spacing",
