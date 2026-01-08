@@ -26,11 +26,19 @@ class Positioned:
 
         if self.left is not None and self.right is not None:
             width = max(bounds.width - self.left - self.right, 0)
+        elif self.left is not None:
+            width = min(content_size.width, max(bounds.width - self.left, 0))
+        elif self.right is not None:
+            width = min(content_size.width, max(bounds.width - self.right, 0))
         else:
             width = min(content_size.width, bounds.width)
 
         if self.top is not None and self.bottom is not None:
             height = max(bounds.height - self.top - self.bottom, 0)
+        elif self.top is not None:
+            height = min(content_size.height, max(bounds.height - self.top, 0))
+        elif self.bottom is not None:
+            height = min(content_size.height, max(bounds.height - self.bottom, 0))
         else:
             height = min(content_size.height, bounds.height)
 
@@ -46,11 +54,19 @@ class Positioned:
 
         if self.left is not None and self.right is not None:
             width = max(bounds.width - self.left - self.right, 0)
+        elif self.left is not None:
+            width = min(content_size.width, max(bounds.width - self.left, 0))
+        elif self.right is not None:
+            width = min(content_size.width, max(bounds.width - self.right, 0))
         else:
             width = min(content_size.width, bounds.width)
 
         if self.top is not None and self.bottom is not None:
             height = max(bounds.height - self.top - self.bottom, 0)
+        elif self.top is not None:
+            height = min(content_size.height, max(bounds.height - self.top, 0))
+        elif self.bottom is not None:
+            height = min(content_size.height, max(bounds.height - self.bottom, 0))
         else:
             height = min(content_size.height, bounds.height)
 
