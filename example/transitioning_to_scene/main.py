@@ -47,7 +47,27 @@ class IntroScene(UIScene):
                             MenuChoice(
                                 "New Game",
                                 value="new",
-                                on_select=lambda: to_scene(SimpleMapScene()), # destroy this scene then go to the input scene
+                                on_select=self._update_subtitle,
+                                color=(240, 244, 255),
+                                selected_color=(240, 244, 255),
+                                highlight_color=(60, 80, 140),
+                                size=36,
+                                center=True,
+                            ),
+                            MenuChoice(
+                                "Load Game",
+                                value="load",
+                                on_select=self._update_subtitle,
+                                color=(240, 244, 255),
+                                selected_color=(240, 244, 255),
+                                highlight_color=(60, 80, 140),
+                                size=36,
+                                center=True,
+                            ),
+                            MenuChoice(
+                                "Exit",
+                                value="exit",
+                                on_select=self._update_subtitle,
                                 color=(240, 244, 255),
                                 selected_color=(240, 244, 255),
                                 highlight_color=(60, 80, 140),
@@ -64,7 +84,14 @@ class IntroScene(UIScene):
             ),
         )
 
+    def _update_subtitle(self, choice: MenuChoice) -> None:
+        self._subtitle = f"{choice.label} selected - swap in your own scene next!"
+        if choice.label in self._options:
+            self._selected_index = self._options.index(choice.label)
+
     def _handle_choice(self, value: str | None) -> None:
+        if value == "new":
+            to_scene(SimpleMapScene())
         if value == "exit":
             self.request_exit()
 
