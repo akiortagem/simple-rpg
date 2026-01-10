@@ -66,7 +66,7 @@ class NPC:
 
         return None
 
-    def interact(self, player: PCMapSprite) -> None:
-        """Respond to the player triggering interaction."""
+    async def interact(self, player: PCMapSprite) -> None:
+        """Respond asynchronously to the player triggering interaction."""
 
         return None
