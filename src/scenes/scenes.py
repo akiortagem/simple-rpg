@@ -9,6 +9,7 @@ trees into renderer commands.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import asyncio
 from asyncio import Future
 from dataclasses import dataclass
 from typing import Protocol, Sequence
@@ -455,6 +456,8 @@ class MapScene(Scene):
         self.object_collision_layer = object_collision_layer
         self._npc_sprites: list[NPCMapSprite] = [c.npc for c in self.npc_controllers if c.npc]
         self._pressed_keys: set[str] = set()
+        self._interaction_in_progress = False
+        self._interaction_task: asyncio.Task[None] | None = None
         self.camera = MapCamera()
 
         collision_detector = (
@@ -498,6 +501,9 @@ class MapScene(Scene):
                 self.request_exit()
                 continue
 
+            if self._interaction_in_progress:
+                continue
+
             key = None
             if event.payload:
                 key = event.payload.get("key")
@@ -506,17 +512,48 @@ class MapScene(Scene):
             elif event.type == "KEYUP" and isinstance(key, str):
                 self._pressed_keys.discard(key)
 
-        self.player.handle_input(set(self._pressed_keys))
-        if any(event.type == "KEYDOWN" and event.payload and event.payload.get("key") == Key.ENTER for event in events):
+        if self._interaction_in_progress:
+            return
+
+        if any(
+            event.type == "KEYDOWN"
+            and event.payload
+            and event.payload.get("key") == Key.ENTER
+            for event in events
+        ):
             controller = self._find_interactable_controller()
             if controller:
-                controller.interact(self.player)
+                self._pressed_keys.clear()
+                self._interaction_in_progress = True
+                self._interaction_task = asyncio.create_task(
+                    controller.interact(self.player)
+                )
+                self._interaction_task.add_done_callback(
+                    self._resolve_interaction_task
+                )
+                return
+
+        self.player.handle_input(set(self._pressed_keys))
 
     def update(self, delta_time: float) -> None:
+        if self._interaction_in_progress:
+            return
+
         for controller in self.npc_controllers:
             controller.update(delta_time, self.player)
         for sprite in self._all_sprites():
             sprite.update(delta_time)
+
+    def _resolve_interaction_task(self, task: asyncio.Task[None]) -> None:
+        if self._interaction_task is not task:
+            return
+
+        self._interaction_task = None
+        self._interaction_in_progress = False
+        try:
+            task.result()
+        except Exception:
+            return None
 
     def render(self, renderer: Renderer) -> None:
         renderer.clear(self.background_color)
