@@ -9,6 +9,7 @@ trees into renderer commands.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from asyncio import Future
 from dataclasses import dataclass
 from typing import Protocol, Sequence
 
@@ -163,6 +164,7 @@ class UIScene(Scene):
         self.screen_size = (0, 0)
         self._ui_renderer = UIRenderer()
         self._ui_controller = UIController()
+        self._pop_future: Future[None] | None = None
 
     @abstractmethod
     def build(self) -> UIElement:
@@ -174,6 +176,22 @@ class UIScene(Scene):
     def handle_events(self, events: Sequence[InputEvent]) -> None:
         root = self.build()
         self._ui_controller.handle_events(events, root)
+
+    def pop(self) -> None:
+        """Request the scene manager to remove this UI overlay."""
+        from .utils import pop_ui
+
+        pop_ui(self)
+
+    def _set_pop_future(self, future: Future[None]) -> None:
+        self._pop_future = future
+
+    def _resolve_pop_future(self) -> None:
+        if self._pop_future is None:
+            return
+        if not self._pop_future.done():
+            self._pop_future.set_result(None)
+        self._pop_future = None
 
     def render(self, renderer: Renderer) -> None:
         self.screen_size = renderer.size

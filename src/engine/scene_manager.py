@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Optional, Sequence
 
 from ..core.contracts import GameConfig, InputEvent, Renderer
-from ..scenes.scenes import LayeredScene, Scene
+from ..scenes.scenes import LayeredScene, Scene, UIScene
 
 
 class SceneManager:
@@ -54,19 +54,24 @@ class SceneManager:
         self._overlay_scenes.append(scene)
         scene.on_enter()
 
-    def pop_overlay(self) -> Scene | None:
-        """Remove the top-most overlay scene, if any."""
+    def pop_overlay(self, scene: Scene | None = None) -> Scene | None:
+        """Remove the top-most or specified overlay scene, if any."""
         if not self._overlay_scenes:
             return None
-        scene = self._overlay_scenes.pop()
-        scene.on_exit()
+        if scene is None:
+            scene = self._overlay_scenes.pop()
+        else:
+            if scene not in self._overlay_scenes:
+                return None
+            self._overlay_scenes.remove(scene)
+        self._finalize_overlay(scene)
         return scene
 
     def clear_overlays(self) -> None:
         """Remove all overlay scenes, invoking exit hooks."""
         while self._overlay_scenes:
             scene = self._overlay_scenes.pop()
-            scene.on_exit()
+            self._finalize_overlay(scene)
 
     def should_exit(self) -> bool:
         """Return whether any active scene requested exiting the game loop."""
@@ -101,7 +106,7 @@ class SceneManager:
             for scene in self._overlay_scenes:
                 if scene.should_exit():
                     self._exit_requested = True
-                    scene.on_exit()
+                    self._finalize_overlay(scene)
                 else:
                     remaining.append(scene)
             self._overlay_scenes = remaining
@@ -111,3 +116,8 @@ class SceneManager:
         active_scene = self._active_scene()
         if active_scene is not None:
             active_scene.render(renderer)
+
+    def _finalize_overlay(self, scene: Scene) -> None:
+        scene.on_exit()
+        if isinstance(scene, UIScene):
+            scene._resolve_pop_future()
