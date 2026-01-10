@@ -190,7 +190,7 @@ class SimpleMapScene(MapSceneBase):
             tile_sheet=tile_sheet,
             tiles=tiles,
             pc=MapPC(
-                starting=(2 * TILE_SIZE, 2 * TILE_SIZE),
+                starting=(2, 2),
                 pc=PlayerPC(PLAYER_SPRITESHEET),
             ),
             object_tiles=object_tiles,
@@ -198,7 +198,7 @@ class SimpleMapScene(MapSceneBase):
             impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
-                    starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
+                    starting=(7, 2),
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(

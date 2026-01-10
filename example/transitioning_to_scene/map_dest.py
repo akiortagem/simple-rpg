@@ -126,8 +126,10 @@ class IdleNPC(NPC):
 
 
 class DestinationMapScene(MapSceneBase):
-    pc_start_coordinates: tuple
-    def __init__(self, pc_start_coordinates:tuple) -> None:
+    pc_start_coordinates: tuple[int, int]
+
+    def __init__(self, pc_start_coordinates: tuple[int, int]) -> None:
+        """pc_start_coordinates are tile coordinates (column, row)."""
         self.pc_start_coordinates = pc_start_coordinates
         super().__init__()
         for controller in self.npc_controllers:
@@ -200,7 +202,7 @@ class DestinationMapScene(MapSceneBase):
             impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
-                    starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
+                    starting=(7, 2),
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
