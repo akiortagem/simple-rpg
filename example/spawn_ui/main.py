@@ -13,15 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.scenes.scenes import MapSceneBase
-from src.scenes.utils import spawn_ui
 from src.world.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
-from src.world.map_scene_entities import NPC, PC
-from src.world.npc_routes import NPCRoute, Route
 from src.world.sprites import PCMapSprite
 from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.main import build_game
 
-from .dialog_ui import DialogUI
+from .npcs import PatrollingNPC, IdleNPC
 
 ASSETS_DIR = Path(__file__).parent.parent / "common_assets"
 TILE_SIZE = 32
@@ -83,48 +80,6 @@ class PlayerPC(PC):
     speed = 140.0
     hitbox_size = HITBOX_SIZE
     hitbox_offset = HITBOX_OFFSET
-
-
-@dataclass(frozen=True)
-class PatrolRoute(Route):
-    span: float
-    wait_time: float = 0.6
-
-    def resolve(self, start: tuple[float, float]) -> NPCRoute:
-        start_x, start_y = start
-        span = self.span
-        return NPCRoute(
-            waypoints=(
-                (start_x, start_y),
-                (start_x + span, start_y),
-                (start_x + span, start_y + span),
-                (start_x, start_y + span),
-            ),
-            loop=True,
-            wait_time=self.wait_time,
-        )
-
-
-class PatrollingNPC(NPC):
-    hitbox_size = HITBOX_SIZE
-    hitbox_offset = HITBOX_OFFSET
-
-    def patrol(self) -> Route | None:
-        return PatrolRoute(span=1 * TILE_SIZE)
-
-    def interact(self, player: PCMapSprite) -> None:
-        spawn_ui(DialogUI("How long should I walk? I'm getting tired. . ."))
-
-
-class IdleNPC(NPC):
-    hitbox_size = HITBOX_SIZE
-    hitbox_offset = HITBOX_OFFSET
-
-    def patrol(self) -> Route | None:
-        return NPCRoute(waypoints=(), loop=True, wait_time=0.0)
-
-    def interact(self, player: PCMapSprite) -> None:
-        spawn_ui(DialogUI("I think  that sweetrolls are swell!"))
 
 
 class SimpleMapScene(MapSceneBase):

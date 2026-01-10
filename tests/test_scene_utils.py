@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 
@@ -51,7 +52,13 @@ def test_spawn_ui_pushes_overlay_scene():
     utils.register_scene_manager(manager)
     ui_scene = DummyUIScene()
 
-    utils.spawn_ui(ui_scene)
+    async def run() -> None:
+        task = utils.spawn_ui(ui_scene)
 
-    assert manager._overlay_scenes == [ui_scene]
-    assert ui_scene.entered is True
+        assert manager._overlay_scenes == [ui_scene]
+        assert ui_scene.entered is True
+
+        manager.pop_overlay(ui_scene)
+        await task
+
+    asyncio.run(run())
