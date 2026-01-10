@@ -6,7 +6,7 @@ from typing import Optional
 from src.engine.async_scheduler import AsyncScheduler
 from src.engine.scene_manager import SceneManager
 
-from .scenes import UIScene
+from .scenes import Scene, UIScene
 
 _scene_manager: Optional[SceneManager] = None
 _scheduler: Optional[AsyncScheduler] = None
@@ -34,6 +34,14 @@ def pop_ui(ui_scene: UIScene) -> None:
     if _scene_manager is None:
         raise RuntimeError("No SceneManager registered. Call register_scene_manager first.")
     _scene_manager.pop_overlay(ui_scene)
+
+
+def to_scene(scene: Scene) -> None:
+    if not isinstance(scene, Scene):
+        raise TypeError("to_scene expects a Scene instance.")
+    if _scene_manager is None:
+        raise RuntimeError("No SceneManager registered. Call register_scene_manager first.")
+    _scene_manager.set_scene(scene)
 
 
 def spawn_ui(ui_scene: UIScene) -> asyncio.Future[None]:
