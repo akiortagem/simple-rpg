@@ -79,9 +79,7 @@ class StubUIScene(UIScene):
 
 
 async def _spawn_overlay(manager, overlay):
-    task = asyncio.create_task(utils.spawn_ui(overlay))
-    await asyncio.sleep(0)
-    return task
+    return utils.spawn_ui(overlay)
 
 
 async def _cleanup_overlay(manager, overlay, task):
