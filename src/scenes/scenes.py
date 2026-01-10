@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import asyncio
+import math
 from asyncio import Future
 from dataclasses import dataclass
 from typing import Callable, Mapping, Protocol, Sequence
@@ -587,7 +588,7 @@ class MapScene(Scene):
 
         x, y, width, height = self.player.hitbox
         sample_x = x + width * 0.5
-        sample_y = y + height
+        sample_y = math.nextafter(y + height, -math.inf)
         row = int(sample_y // tile_height)
         column = int(sample_x // tile_width)
         return (row, column)
