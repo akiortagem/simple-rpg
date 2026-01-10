@@ -1,4 +1,3 @@
-import asyncio
 import os
 import sys
 
@@ -6,6 +5,7 @@ import pytest
 
 sys.path.append(os.path.abspath("."))
 
+from src.engine.async_scheduler import AsyncScheduler
 from src.engine.scene_manager import SceneManager
 from src.scenes import utils
 from src.scenes.scenes import Scene, UIScene
@@ -34,31 +34,39 @@ class DummyUIScene(UIScene):
 
 def test_spawn_ui_requires_registered_scene_manager():
     utils._scene_manager = None
+    scheduler = AsyncScheduler()
+    utils.register_scheduler(scheduler)
 
     with pytest.raises(RuntimeError, match="No SceneManager registered"):
         utils.spawn_ui(DummyUIScene())
+
+    scheduler.loop.close()
 
 
 def test_spawn_ui_rejects_non_ui_scene():
     manager = SceneManager(initial_scene=DummyScene())
     utils.register_scene_manager(manager)
+    scheduler = AsyncScheduler()
+    utils.register_scheduler(scheduler)
 
     with pytest.raises(TypeError, match="spawn_ui expects a UIScene"):
         utils.spawn_ui(DummyScene())  # type: ignore[arg-type]
+
+    scheduler.loop.close()
 
 
 def test_spawn_ui_pushes_overlay_scene():
     manager = SceneManager(initial_scene=DummyScene())
     utils.register_scene_manager(manager)
+    scheduler = AsyncScheduler()
+    utils.register_scheduler(scheduler)
     ui_scene = DummyUIScene()
 
-    async def run() -> None:
-        task = utils.spawn_ui(ui_scene)
+    task = utils.spawn_ui(ui_scene)
 
-        assert manager._overlay_scenes == [ui_scene]
-        assert ui_scene.entered is True
+    assert manager._overlay_scenes == [ui_scene]
+    assert ui_scene.entered is True
 
-        manager.pop_overlay(ui_scene)
-        await task
-
-    asyncio.run(run())
+    manager.pop_overlay(ui_scene)
+    scheduler.loop.run_until_complete(task)
+    scheduler.loop.close()
