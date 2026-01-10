@@ -525,24 +525,13 @@ class MapScene(Scene):
             if controller:
                 self._pressed_keys.clear()
                 self._interaction_in_progress = True
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    loop = None
+                from .utils import get_scheduler
 
-                if loop and loop.is_running():
-                    self._interaction_task = loop.create_task(
-                        controller.interact(self.player)
-                    )
-                    self._interaction_task.add_done_callback(
-                        self._resolve_interaction_task
-                    )
-                else:
-                    try:
-                        asyncio.run(controller.interact(self.player))
-                    finally:
-                        self._interaction_in_progress = False
-                        self._interaction_task = None
+                scheduler = get_scheduler()
+                self._interaction_task = scheduler.create_task(
+                    controller.interact(self.player)
+                )
+                self._interaction_task.add_done_callback(self._resolve_interaction_task)
                 return
 
         self.player.handle_input(set(self._pressed_keys))

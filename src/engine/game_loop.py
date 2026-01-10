@@ -9,6 +9,7 @@ renders each frame.
 from __future__ import annotations
 
 from ..core.contracts import EventSource, Renderer, TimeSource
+from .async_scheduler import AsyncScheduler
 from .scene_manager import SceneManager
 
 
@@ -22,12 +23,17 @@ class GameLoop:
         events: EventSource,
         clock: TimeSource,
         target_fps: int = 60,
+        scheduler: AsyncScheduler | None = None,
     ) -> None:
         self._scene_manager = scene_manager
         self._renderer = renderer
         self._events = events
         self._clock = clock
         self._target_fps = target_fps
+        self._scheduler = scheduler or AsyncScheduler()
+        from ..scenes.utils import register_scheduler
+
+        register_scheduler(self._scheduler)
 
     def run(self) -> None:
         """Run the main loop until a quit event or scene exit request."""
@@ -44,6 +50,7 @@ class GameLoop:
                 continue
 
             delta_time = self._clock.tick(self._target_fps)
+            self._scheduler.tick()
             self._scene_manager.update(delta_time)
 
             self._scene_manager.render(self._renderer)
