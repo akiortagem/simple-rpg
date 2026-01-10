@@ -21,8 +21,6 @@ from src.world.npc_routes import NPCRoute, Route
 from src.world.sprites import PCMapSprite
 from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 
-from .map_dest import DestinationMapScene
-
 ASSETS_DIR = Path(__file__).parent.parent / "common_assets"
 TILE_SIZE = 32
 SPRITE_TILE_SIZE = 64
@@ -127,8 +125,8 @@ class IdleNPC(NPC):
         Dialog("The idle NPC smiles politely.")
 
 
-class SimpleMapScene(MapSceneBase):
-    def __init__(self) -> None:
+class DestinationMapScene(MapSceneBase):
+    def __init__(self, pc_start_coordinates:tuple) -> None:
         super().__init__()
         for controller in self.npc_controllers:
             if isinstance(controller.actor, PatrollingNPC):
@@ -140,25 +138,23 @@ class SimpleMapScene(MapSceneBase):
                 if controller.npc is not None:
                     controller.npc.speed = 0.0
 
-    def build(self) -> Map:
-        def __coordinates_handler(x, y):
-            if (x, y) == (10, 5):
-                to_scene(DestinationMapScene(pc_start_coordinates=(0, 5)))
+        self.pc_start_coordinates = pc_start_coordinates
 
+    def build(self) -> Map:
         tiles = [
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 56, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 56, 1, 1, 56, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 56, 1, 1, 1, 56],
         ]
         tile_sheet = TileSheet(
             image=ASSETS_DIR / "tileset.png",
@@ -196,7 +192,7 @@ class SimpleMapScene(MapSceneBase):
             tile_sheet=tile_sheet,
             tiles=tiles,
             pc=MapPC(
-                starting=(2 * TILE_SIZE, 2 * TILE_SIZE),
+                starting=self,
                 pc=PlayerPC(PLAYER_SPRITESHEET),
             ),
             object_tiles=object_tiles,
@@ -204,7 +200,7 @@ class SimpleMapScene(MapSceneBase):
             impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
-                    starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
+                    starting=self.pc_start_coordinates,
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
@@ -213,5 +209,4 @@ class SimpleMapScene(MapSceneBase):
                 ),
             ),
             impassable_ids={8, 7},
-            on_coordinate=__coordinates_handler
         )
