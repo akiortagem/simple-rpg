@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Mapping, Sequence
 
 from .map_scene_entities import NPC
 from .npc_controller import NPCController
@@ -73,6 +73,9 @@ class Map:
     describing the artwork. Any non-zero object tile IDs listed in
     ``impassable_object_ids`` will block movement alongside
     ``impassable_ids``.
+
+    ``on_coordinate`` maps tile coordinates (row, column) to callbacks invoked
+    as ``handler(scene, (row, column))`` when the player enters the tile.
     """
 
     tile_sheet: TileSheet
@@ -84,6 +87,7 @@ class Map:
     object_tilesheet: TileSheet | None = None
     impassable_object_ids: set[int] = field(default_factory=set)
     tile_offsets: Sequence[Sequence[tuple[int, int] | None]] | None = None
+    on_coordinate: Mapping[tuple[int, int], Callable[..., None]] | None = None
 
 
 @dataclass(frozen=True)
@@ -106,6 +110,7 @@ class MapSceneAssets:
     object_collision_layer: DebugCollisionLayer | None
     player: PCMapSprite
     npc_controllers: list[NPCController]
+    on_coordinate: Mapping[tuple[int, int], Callable[..., None]] | None
 
 
 def build_map_scene_assets(definition: Map) -> MapSceneAssets:
@@ -152,6 +157,7 @@ def build_map_scene_assets(definition: Map) -> MapSceneAssets:
         object_collision_layer=object_collision_layer,
         player=player,
         npc_controllers=npc_controllers,
+        on_coordinate=definition.on_coordinate,
     )
 
 
