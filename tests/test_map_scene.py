@@ -305,3 +305,36 @@ def test_interaction_requires_facing_and_range():
     scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.ENTER})])
 
     assert controller.interactions == []
+
+
+def test_on_coordinate_triggers_once_per_entry():
+    tileset = TilesetDescriptor(
+        image="tiles",
+        tile_width=10,
+        tile_height=10,
+        columns=1,
+    )
+    tilemap = TilemapLayer(tileset, [[0, 0], [0, 0]])
+    player = make_sprite()
+    calls = []
+
+    def handle_coordinate(scene, coordinate):
+        calls.append((scene, coordinate))
+
+    scene = MapScene(
+        tilemap,
+        tilemap,
+        player,
+        on_coordinate={(0, 0): handle_coordinate},
+    )
+
+    scene.update(0)
+    scene.update(0)
+
+    player.x = 10
+    scene.update(0)
+
+    player.x = 0
+    scene.update(0)
+
+    assert [coordinate for _, coordinate in calls] == [(0, 0), (0, 0)]
