@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from dataclasses import dataclass
@@ -77,6 +78,17 @@ class StubUIScene(UIScene):
         self.exited = True
 
 
+async def _spawn_overlay(manager, overlay):
+    task = asyncio.create_task(utils.spawn_ui(overlay))
+    await asyncio.sleep(0)
+    return task
+
+
+async def _cleanup_overlay(manager, overlay, task):
+    manager.pop_overlay(overlay)
+    await task
+
+
 def test_spawn_ui_renders_overlay_after_base_scene():
     call_log: list[str] = []
     base = StubScene("base", call_log)
@@ -85,8 +97,12 @@ def test_spawn_ui_renders_overlay_after_base_scene():
     overlay = StubUIScene("overlay", call_log)
     renderer = DummyRenderer()
 
-    utils.spawn_ui(overlay)
-    manager.render(renderer)
+    async def run() -> None:
+        task = await _spawn_overlay(manager, overlay)
+        manager.render(renderer)
+        await _cleanup_overlay(manager, overlay, task)
+
+    asyncio.run(run())
 
     assert call_log == [
         "render:base:DummyRenderer",
@@ -101,9 +117,13 @@ def test_spawn_ui_forwards_events_and_updates_to_overlay_then_base():
     utils.register_scene_manager(manager)
     overlay = StubUIScene("overlay", call_log)
 
-    utils.spawn_ui(overlay)
-    manager.handle_events([InputEvent(type="MOVE")])
-    manager.update(0.25)
+    async def run() -> None:
+        task = await _spawn_overlay(manager, overlay)
+        manager.handle_events([InputEvent(type="MOVE")])
+        manager.update(0.25)
+        await _cleanup_overlay(manager, overlay, task)
+
+    asyncio.run(run())
 
     assert call_log == [
         "events:overlay",
@@ -120,9 +140,13 @@ def test_spawn_ui_overlay_removed_after_exit_request():
     utils.register_scene_manager(manager)
     overlay = StubUIScene("overlay", call_log)
 
-    utils.spawn_ui(overlay)
-    overlay.request_exit()
-    manager.update(0.1)
+    async def run() -> None:
+        task = await _spawn_overlay(manager, overlay)
+        overlay.request_exit()
+        manager.update(0.1)
+        await task
+
+    asyncio.run(run())
 
     assert overlay.exited is True
     assert manager._overlay_scenes == []
@@ -131,3 +155,19 @@ def test_spawn_ui_overlay_removed_after_exit_request():
     manager.handle_events([InputEvent(type="MOVE")])
 
     assert call_log == ["events:base"]
+
+
+def test_spawn_ui_completes_when_ui_scene_pops_itself():
+    call_log: list[str] = []
+    base = StubScene("base", call_log)
+    manager = SceneManager(initial_scene=base)
+    utils.register_scene_manager(manager)
+    overlay = StubUIScene("overlay", call_log)
+
+    async def run() -> None:
+        task = await _spawn_overlay(manager, overlay)
+        overlay.pop()
+        await task
+
+    asyncio.run(run())
+    assert manager._overlay_scenes == []
