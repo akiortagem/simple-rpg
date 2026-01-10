@@ -21,6 +21,24 @@ class DummyScene(Scene):
         return None
 
 
+class DummyHookScene(Scene):
+    def __init__(self) -> None:
+        self.entered = False
+        self.exited = False
+
+    def on_enter(self) -> None:
+        self.entered = True
+
+    def on_exit(self) -> None:
+        self.exited = True
+
+    def update(self, delta_time: float) -> None:
+        return None
+
+    def render(self, renderer) -> None:
+        return None
+
+
 class DummyUIScene(UIScene):
     def __init__(self) -> None:
         super().__init__()
@@ -89,3 +107,33 @@ def test_spawn_ui_uses_running_loop_without_scheduler():
         await task
 
     asyncio.run(run_test())
+
+
+def test_to_scene_requires_registered_scene_manager():
+    utils._scene_manager = None
+
+    with pytest.raises(RuntimeError, match="No SceneManager registered"):
+        utils.to_scene(DummyScene())
+
+
+def test_to_scene_rejects_non_scene():
+    manager = SceneManager(initial_scene=DummyScene())
+    utils.register_scene_manager(manager)
+
+    with pytest.raises(TypeError, match="to_scene expects a Scene"):
+        utils.to_scene("not a scene")  # type: ignore[arg-type]
+
+
+def test_to_scene_sets_scene_and_triggers_hooks():
+    initial_scene = DummyHookScene()
+    manager = SceneManager(initial_scene=initial_scene)
+    utils.register_scene_manager(manager)
+    next_scene = DummyHookScene()
+
+    assert initial_scene.entered is True
+
+    utils.to_scene(next_scene)
+
+    assert manager.current_scene is next_scene
+    assert initial_scene.exited is True
+    assert next_scene.entered is True
