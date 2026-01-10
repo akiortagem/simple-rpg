@@ -46,7 +46,7 @@ class TileSheet:
 class MapPC:
     """Declarative playable character definition.
 
-    ``starting`` is provided in tile coordinates (column, row).
+    ``starting`` is provided in tile coordinates (row, column).
     """
 
     starting: tuple[int, int]
@@ -57,7 +57,7 @@ class MapPC:
 class MapNPC:
     """Declarative NPC definition.
 
-    ``starting`` is provided in tile coordinates (column, row).
+    ``starting`` is provided in tile coordinates (row, column).
     """
 
     starting: tuple[int, int]
@@ -72,7 +72,7 @@ class Map:
     to a tile in row-major order. ``None`` means no tile should be rendered for
     that cell; collision queries treat ``None`` as empty space. ``pc`` and
     ``npcs`` define the starting positions for the map entities, expressed as
-    tile coordinates.
+    tile coordinates (row, column).
 
     Use ``object_tiles`` to supply a second tile layer (same dimensions as
     ``tiles``) that is rendered after the base tiles but before sprites. Use
@@ -243,9 +243,9 @@ def _tile_to_pixels(
     starting: tuple[int, int],
     tile_size: tuple[int, int],
 ) -> tuple[float, float]:
-    start_x, start_y = starting
+    start_row, start_column = starting
     tile_width, tile_height = tile_size
-    return (start_x * tile_width, start_y * tile_height)
+    return (start_column * tile_width, start_row * tile_height)
 
 
 def _clone_player(template: PCMapSprite) -> PCMapSprite:

@@ -205,11 +205,11 @@ class SimpleMapScene(MapSceneBase):
             impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
-                    starting=(7, 2),
+                    starting=(2, 7),
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
-                    starting=(14, 2),
+                    starting=(2, 14),
                     npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),
