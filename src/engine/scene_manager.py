@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Optional, Sequence
 
 from ..core.contracts import GameConfig, InputEvent, Renderer
-from ..scenes.scenes import Scene
+from ..scenes.scenes import LayeredScene, Scene, UIScene
 
 
 class SceneManager:
@@ -22,7 +22,9 @@ class SceneManager:
         config: GameConfig | None = None,
     ) -> None:
         self._current_scene: Scene | None = None
+        self._overlay_scenes: list[Scene] = []
         self._config = config or GameConfig()
+        self._exit_requested = False
         if initial_scene is not None:
             self.set_scene(initial_scene)
 
@@ -38,23 +40,84 @@ class SceneManager:
 
     def set_scene(self, scene: Scene) -> None:
         """Replace the active scene and trigger lifecycle hooks."""
+        self.clear_overlays()
         if self._current_scene is not None:
             self._current_scene.on_exit()
         scene.config = self._config
         self._current_scene = scene
+        self._exit_requested = False
         self._current_scene.on_enter()
+
+    def push_overlay(self, scene: Scene) -> None:
+        """Add an overlay scene above the current scene."""
+        scene.config = self._config
+        self._overlay_scenes.append(scene)
+        scene.on_enter()
+
+    def pop_overlay(self, scene: Scene | None = None) -> Scene | None:
+        """Remove the top-most or specified overlay scene, if any."""
+        if not self._overlay_scenes:
+            return None
+        if scene is None:
+            scene = self._overlay_scenes.pop()
+        else:
+            if scene not in self._overlay_scenes:
+                return None
+            self._overlay_scenes.remove(scene)
+        self._finalize_overlay(scene)
+        return scene
+
+    def clear_overlays(self) -> None:
+        """Remove all overlay scenes, invoking exit hooks."""
+        while self._overlay_scenes:
+            scene = self._overlay_scenes.pop()
+            self._finalize_overlay(scene)
+
+    def should_exit(self) -> bool:
+        """Return whether any active scene requested exiting the game loop."""
+        if self._exit_requested:
+            return True
+        if self._current_scene is not None and self._current_scene.should_exit():
+            return True
+        return any(scene.should_exit() for scene in self._overlay_scenes)
+
+    def _active_scene(self) -> Scene | None:
+        if self._current_scene is None:
+            return None
+        if not self._overlay_scenes:
+            return self._current_scene
+        overlays_top_to_bottom = list(reversed(self._overlay_scenes))
+        return LayeredScene([*overlays_top_to_bottom, self._current_scene])
 
     def handle_events(self, events: Sequence[InputEvent]) -> None:
         """Forward input events to the active scene."""
-        if self._current_scene is not None:
-            self._current_scene.handle_events(events)
+        active_scene = self._active_scene()
+        if active_scene is not None:
+            active_scene.handle_events(events)
 
     def update(self, delta_time: float) -> None:
         """Advance the active scene by ``delta_time`` seconds."""
-        if self._current_scene is not None:
-            self._current_scene.update(delta_time)
+        active_scene = self._active_scene()
+        if active_scene is None:
+            return
+        active_scene.update(delta_time)
+        if self._overlay_scenes:
+            remaining: list[Scene] = []
+            for scene in self._overlay_scenes:
+                if scene.should_exit():
+                    self._exit_requested = True
+                    self._finalize_overlay(scene)
+                else:
+                    remaining.append(scene)
+            self._overlay_scenes = remaining
 
     def render(self, renderer: Renderer) -> None:
         """Render the active scene using the provided renderer."""
-        if self._current_scene is not None:
-            self._current_scene.render(renderer)
+        active_scene = self._active_scene()
+        if active_scene is not None:
+            active_scene.render(renderer)
+
+    def _finalize_overlay(self, scene: Scene) -> None:
+        scene.on_exit()
+        if isinstance(scene, UIScene):
+            scene._resolve_pop_future()

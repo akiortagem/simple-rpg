@@ -6,6 +6,8 @@ import pytest
 sys.path.append(os.path.abspath("."))
 
 from src.core.contracts import InputEvent, Key
+from src.engine.async_scheduler import AsyncScheduler
+from src.scenes import utils
 from src.scenes.scenes import MapScene
 from src.world.npc_controller import NPCMapController
 from src.world.sprites import NPCMapSprite, PCMapSprite, SpriteSheetDescriptor
@@ -66,7 +68,7 @@ class FakeController(NPCMapController):
     def update(self, delta_time, player):
         self.update_calls.append((delta_time, player))
 
-    def interact(self, player):
+    async def interact(self, player):
         self.interactions.append(player)
 
 
@@ -266,8 +268,12 @@ def test_handle_interaction_invokes_manager_when_facing_npc():
     npc.y = player.spritesheet.frame_height + 2  # directly in front of the player
     controller = FakeController(npc=npc)
     scene = MapScene(tilemap, tilemap, player, npc_controllers=[controller])
+    scheduler = AsyncScheduler()
+    utils.register_scheduler(scheduler)
 
     scene.handle_events([InputEvent(type="KEYDOWN", payload={"key": Key.ENTER})])
+    scheduler.tick()
+    scheduler.loop.close()
 
     assert controller.interactions == [player]
 

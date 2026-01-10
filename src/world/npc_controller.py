@@ -6,6 +6,7 @@ Use ``NPCController`` protocols to inject behavior into ``MapScene`` NPCs, and
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -28,7 +29,7 @@ class NPCMapController(Protocol):
     def update(self, delta_time: float, player: PCMapSprite) -> None:
         """Advance controller state for the frame."""
 
-    def interact(self, player: PCMapSprite) -> None:
+    def interact(self, player: PCMapSprite) -> Awaitable[None]:
         """Respond to the player triggering an interaction."""
 
 
@@ -128,8 +129,8 @@ class NPCController:
         dy /= distance
         self.npc.velocity = (dx * self.speed, dy * self.speed)
 
-    def interact(self, player: PCMapSprite) -> None:
-        self.actor.interact(player)
+    async def interact(self, player: PCMapSprite) -> None:
+        await self.actor.interact(player)
         self.interactions += 1
 
     def _begin_wait_and_advance(self) -> None:

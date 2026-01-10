@@ -12,8 +12,10 @@ from .column import Column
 from .container import Container
 from .controller import UIController
 from .dialog import Dialog
+from .keypress_detector import KeypressDetector
 from .menu import Menu
 from .menu_choice import MenuChoice
+from .positioned import Positioned
 from .spacing import Spacing
 from .text import Text
 
@@ -23,9 +25,11 @@ __all__ = [
     "Column",
     "Container",
     "Dialog",
+    "KeypressDetector",
     "LayoutNode",
     "Menu",
     "MenuChoice",
+    "Positioned",
     "Rect",
     "Size",
     "Spacing",
