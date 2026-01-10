@@ -211,6 +211,7 @@ def _build_player(definition: MapPC) -> PCMapSprite:
     if not isinstance(template, PCMapSprite):
         raise TypeError("pc must construct a PCMapSprite instance")
     player = _clone_player(template)
+    print(definition.starting)
     player.x, player.y = definition.starting
     return player
 

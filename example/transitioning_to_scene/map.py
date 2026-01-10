@@ -141,9 +141,10 @@ class SimpleMapScene(MapSceneBase):
                     controller.npc.speed = 0.0
 
     def build(self) -> Map:
-        def __coordinates_handler(x, y):
-            if (x, y) == (10, 5):
-                to_scene(DestinationMapScene(pc_start_coordinates=(0, 5)))
+        def __coordinates_handler(coord):
+            print(coord)
+            if coord == (7, 9):
+                to_scene(DestinationMapScene(pc_start_coordinates=(6,1)))
 
         tiles = [
             [1, 1, 1, 1, 1, 56, 1, 1, 1, 1],

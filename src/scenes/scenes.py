@@ -447,11 +447,12 @@ class MapScene(Scene):
         npc_controllers: Sequence[NPCMapController] | None = None,
         base_collision_layer: DebugCollisionLayer | None = None,
         object_collision_layer: DebugCollisionLayer | None = None,
-        on_coordinate: Mapping[
-            tuple[int, int],
-            Callable[[MapScene, tuple[int, int]], None],
-        ]
-        | None = None,
+        # on_coordinate: Mapping[
+        #     tuple[int, int],
+        #     Callable[[MapScene, tuple[int, int]], None],
+        # ]
+        # | None = None,
+        on_coordinate: Callable[[tuple[int, int]], None] | None = None
     ) -> None:
         self.visual_tilemap = visual_tilemap
         self.object_tilemap = object_tilemap
@@ -464,7 +465,7 @@ class MapScene(Scene):
         self._pressed_keys: set[str] = set()
         self._interaction_in_progress = False
         self._interaction_task: asyncio.Task[None] | None = None
-        self._on_coordinate = dict(on_coordinate or {})
+        self._on_coordinate = on_coordinate
         self._last_tile_coordinate: tuple[int, int] | None = None
         self.camera = MapCamera()
 
@@ -572,9 +573,10 @@ class MapScene(Scene):
         if coordinate is None or coordinate == self._last_tile_coordinate:
             return
         self._last_tile_coordinate = coordinate
-        handler = self._on_coordinate.get(coordinate)
-        if handler:
-            handler(self, coordinate)
+        self._on_coordinate(coordinate)
+        # handler = self._on_coordinate.get(coordinate)
+        # if handler:
+        #     handler(self, coordinate)
 
     def _player_tile_coordinate(self) -> tuple[int, int] | None:
         """Return the player's (row, column) tile using the hitbox feet position."""

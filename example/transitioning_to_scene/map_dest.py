@@ -126,7 +126,9 @@ class IdleNPC(NPC):
 
 
 class DestinationMapScene(MapSceneBase):
+    pc_start_coordinates: tuple
     def __init__(self, pc_start_coordinates:tuple) -> None:
+        self.pc_start_coordinates = pc_start_coordinates
         super().__init__()
         for controller in self.npc_controllers:
             if isinstance(controller.actor, PatrollingNPC):
@@ -137,8 +139,6 @@ class DestinationMapScene(MapSceneBase):
                 controller.speed = 0.0
                 if controller.npc is not None:
                     controller.npc.speed = 0.0
-
-        self.pc_start_coordinates = pc_start_coordinates
 
     def build(self) -> Map:
         tiles = [
@@ -192,7 +192,7 @@ class DestinationMapScene(MapSceneBase):
             tile_sheet=tile_sheet,
             tiles=tiles,
             pc=MapPC(
-                starting=self,
+                starting=self.pc_start_coordinates,
                 pc=PlayerPC(PLAYER_SPRITESHEET),
             ),
             object_tiles=object_tiles,
@@ -200,7 +200,7 @@ class DestinationMapScene(MapSceneBase):
             impassable_object_ids=impassable_object_ids,
             npcs=(
                 MapNPC(
-                    starting=self.pc_start_coordinates,
+                    starting=(7 * TILE_SIZE, 2 * TILE_SIZE),
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
