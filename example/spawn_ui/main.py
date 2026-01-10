@@ -9,12 +9,11 @@ Asset filenames expected by this example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 from src.scenes.scenes import MapSceneBase
+from src.world.map_scene_entities import PC
 from src.world.map_scene_declarative import Map, MapNPC, MapPC, TileSheet
-from src.world.sprites import PCMapSprite
 from src.world.spritesheet_declarative import SpriteSheet, SpriteSheetAnimations
 from src.main import build_game
 

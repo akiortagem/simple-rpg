@@ -3,12 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.scenes.utils import spawn_ui
-from src.world.map_scene_entities import NPC, PC
+from src.world.map_scene_entities import NPC
 from src.world.npc_routes import NPCRoute, Route
 from src.world.sprites import PCMapSprite
-from src.main import build_game
 
 from .dialog_ui import DialogUI
+
+TILE_SIZE = 32
+HITBOX_SIZE = (25, 25)
+HITBOX_OFFSET = (20, 43)
+
 
 @dataclass(frozen=True)
 class PatrolRoute(Route):
