@@ -41,7 +41,14 @@ def spawn_ui(ui_scene: UIScene) -> asyncio.Future[None]:
         raise TypeError("spawn_ui expects a UIScene instance.")
     if _scene_manager is None:
         raise RuntimeError("No SceneManager registered. Call register_scene_manager first.")
-    loop = get_scheduler().loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        if _scheduler is not None:
+            loop = _scheduler.loop
+        else:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
     completion_future = loop.create_future()
     ui_scene._set_pop_future(completion_future)
     _scene_manager.push_overlay(ui_scene)

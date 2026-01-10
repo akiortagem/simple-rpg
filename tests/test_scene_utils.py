@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 
@@ -70,3 +71,21 @@ def test_spawn_ui_pushes_overlay_scene():
     manager.pop_overlay(ui_scene)
     scheduler.loop.run_until_complete(task)
     scheduler.loop.close()
+
+
+def test_spawn_ui_uses_running_loop_without_scheduler():
+    manager = SceneManager(initial_scene=DummyScene())
+    utils.register_scene_manager(manager)
+    utils._scheduler = None
+    ui_scene = DummyUIScene()
+
+    async def run_test() -> None:
+        task = utils.spawn_ui(ui_scene)
+
+        assert task.get_loop() is asyncio.get_running_loop()
+        assert manager._overlay_scenes == [ui_scene]
+
+        manager.pop_overlay(ui_scene)
+        await task
+
+    asyncio.run(run_test())
