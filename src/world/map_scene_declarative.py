@@ -44,17 +44,23 @@ class TileSheet:
 
 @dataclass(frozen=True)
 class MapPC:
-    """Declarative playable character definition."""
+    """Declarative playable character definition.
 
-    starting: tuple[float, float]
+    ``starting`` is provided in tile coordinates (row, column).
+    """
+
+    starting: tuple[int, int]
     pc: PCMapSprite
 
 
 @dataclass(frozen=True)
 class MapNPC:
-    """Declarative NPC definition."""
+    """Declarative NPC definition.
 
-    starting: tuple[float, float]
+    ``starting`` is provided in tile coordinates (row, column).
+    """
+
+    starting: tuple[int, int]
     npc: NPC
 
 
@@ -65,7 +71,8 @@ class Map:
     ``tiles`` is a grid of tile indices into ``tile_sheet``. Each integer refers
     to a tile in row-major order. ``None`` means no tile should be rendered for
     that cell; collision queries treat ``None`` as empty space. ``pc`` and
-    ``npcs`` define the starting positions for the map entities.
+    ``npcs`` define the starting positions for the map entities, expressed as
+    tile coordinates (row, column).
 
     Use ``object_tiles`` to supply a second tile layer (same dimensions as
     ``tiles``) that is rendered after the base tiles but before sprites. Use
@@ -132,8 +139,11 @@ def build_map_scene_assets(definition: Map) -> MapSceneAssets:
     )
     collision_tilemap = TileCollisionDetector(tilemap=collision_map)
 
-    player = _build_player(definition.pc)
-    npc_controllers = [_build_npc_controller(npc) for npc in definition.npcs]
+    tile_size = (tileset.tile_width, tileset.tile_height)
+    player = _build_player(definition.pc, tile_size)
+    npc_controllers = [
+        _build_npc_controller(npc, tile_size) for npc in definition.npcs
+    ]
     base_collision_layer = DebugCollisionLayer(
         tiles=definition.tiles,
         tile_size=(tileset.tile_width, tileset.tile_height),
@@ -206,25 +216,36 @@ def _ensure_object_tiles_shape(
                 raise ValueError("object_tiles must match the column count of tiles")
 
 
-def _build_player(definition: MapPC) -> PCMapSprite:
+def _build_player(definition: MapPC, tile_size: tuple[int, int]) -> PCMapSprite:
     template = definition.pc
     if not isinstance(template, PCMapSprite):
         raise TypeError("pc must construct a PCMapSprite instance")
     player = _clone_player(template)
-    print(definition.starting)
-    player.x, player.y = definition.starting
+    player.x, player.y = _tile_to_pixels(definition.starting, tile_size)
     return player
 
 
-def _build_npc_controller(definition: MapNPC) -> NPCController:
+def _build_npc_controller(
+    definition: MapNPC,
+    tile_size: tuple[int, int],
+) -> NPCController:
     npc = definition.npc
     if not isinstance(npc, NPC):
         raise TypeError("npc must construct an NPC instance")
     controller = NPCController(actor=npc)
     if controller.npc is None:
         raise TypeError("npc must construct an NPCController with an NPCMapSprite")
-    controller.npc.x, controller.npc.y = definition.starting
+    controller.npc.x, controller.npc.y = _tile_to_pixels(definition.starting, tile_size)
     return controller
+
+
+def _tile_to_pixels(
+    starting: tuple[int, int],
+    tile_size: tuple[int, int],
+) -> tuple[float, float]:
+    start_row, start_column = starting
+    tile_width, tile_height = tile_size
+    return (start_column * tile_width, start_row * tile_height)
 
 
 def _clone_player(template: PCMapSprite) -> PCMapSprite:
