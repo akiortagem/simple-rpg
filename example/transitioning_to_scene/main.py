@@ -62,6 +62,7 @@ class IntroScene(UIScene):
                 ),
                 spacing=16,
             ),
+        )
 
     def _handle_choice(self, value: str | None) -> None:
         if value == "exit":
