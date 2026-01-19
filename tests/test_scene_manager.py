@@ -173,3 +173,27 @@ def test_overlay_exit_request_sets_manager_exit_flag():
 
     assert overlay.exited is True
     assert manager.should_exit() is True
+
+
+def test_push_scene_blocks_base_updates_and_events():
+    calls: list[str] = []
+    base = OrderedScene("base", calls)
+    overlay = OrderedScene("overlay", calls)
+    manager = SceneManager(initial_scene=base)
+
+    manager.push_scene(overlay)
+    manager.handle_events([])
+    manager.update(0.1)
+
+    assert calls == ["events:overlay", "update:overlay"]
+
+
+def test_push_scene_sets_scene_when_no_current_scene():
+    manager = SceneManager()
+    scene = StubScene("first")
+
+    manager.push_scene(scene)
+
+    assert manager.current_scene is scene
+    assert scene.entered is True
+    assert manager._overlay_scenes == []

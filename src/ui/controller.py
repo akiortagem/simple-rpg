@@ -36,20 +36,31 @@ class UIController:
             if event.type != "KEYDOWN" or not event.payload:
                 continue
             key = event.payload.get("key")
+            handled = False
+            for detector in detectors:
+                if detector.on_keypress and isinstance(key, str):
+                    if detector.on_keypress(key):
+                        handled = True
+            if handled:
+                event.payload["handled"] = True
+                continue
             if key == Key.UP and menu is not None:
                 self._has_focus = True
                 self.focused_index -= 1
                 self._clamp_focus(menu)
+                event.payload["handled"] = True
             elif key == Key.DOWN and menu is not None:
                 self._has_focus = True
                 self.focused_index += 1
                 self._clamp_focus(menu)
+                event.payload["handled"] = True
             elif key == Key.ENTER:
                 if menu is not None:
                     menu.select(self.focused_index).activate()
                 for detector in detectors:
                     if detector.on_interact:
                         detector.on_interact()
+                event.payload["handled"] = True
 
     def apply(self, root: UIElement) -> UIElement:
         """Return a UI tree with focus applied to menu selections."""

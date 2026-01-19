@@ -118,6 +118,7 @@ class PygameEventSource(EventSource):
             pygame.K_RIGHT: Key.RIGHT,
             pygame.K_RETURN: Key.ENTER,
             pygame.K_KP_ENTER: Key.ENTER,
+            pygame.K_ESCAPE: Key.PAUSE,
         }
         return mapping.get(raw_key, raw_key)
 

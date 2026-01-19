@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import pygame
 
+from typing import Callable
+
 from src.core.contracts import GameConfig
 from src.engine.game_loop import GameLoop
 from src.engine.scene_manager import SceneManager
@@ -26,6 +28,7 @@ def build_game(
     title: str = "Simple RPG",
     initial_scene: Scene | None = None,
     debug_collision: bool = False,
+    global_on_keypress: Callable[[str], None] | None = None,
 ) -> GameLoop:
     """Wire up the game loop with pygame infrastructure.
 
@@ -42,6 +45,8 @@ def build_game(
         will be used as a placeholder.
     debug_collision: bool
         Whether scenes should visualize collision debugging information.
+    global_on_keypress: Callable[[str], None] | None
+        Optional callback invoked for key presses when no UI overlay is active.
     """
     pygame.init()
 
@@ -52,4 +57,10 @@ def build_game(
     scene_manager = SceneManager(config=GameConfig(debug_collision=debug_collision))
     register_scene_manager(scene_manager)
     scene_manager.set_scene(initial_scene or DemoScene())
-    return GameLoop(scene_manager=scene_manager, renderer=renderer, events=events, clock=clock)
+    return GameLoop(
+        scene_manager=scene_manager,
+        renderer=renderer,
+        events=events,
+        clock=clock,
+        global_on_keypress=global_on_keypress,
+    )

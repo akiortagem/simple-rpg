@@ -34,6 +34,38 @@ class RecordingSceneManager:
         return self.current_scene.should_exit()
 
 
+class RecordingGlobalSceneManager:
+    def __init__(
+        self,
+        allow_global: bool,
+        order: list[str],
+        mark_handled: bool = False,
+    ) -> None:
+        self.current_scene = StubScene(should_exit=False)
+        self._allow_global = allow_global
+        self._order = order
+        self._mark_handled = mark_handled
+
+    def allows_global_keypress(self) -> bool:
+        return self._allow_global
+
+    def handle_events(self, events):
+        self._order.append("handle_events")
+        if self._mark_handled:
+            for event in events:
+                if event.payload is not None:
+                    event.payload["handled"] = True
+
+    def update(self, delta_time: float) -> None:
+        self._order.append("update")
+
+    def render(self, renderer: Renderer) -> None:
+        self._order.append("render")
+
+    def should_exit(self) -> bool:
+        return self.current_scene.should_exit()
+
+
 @dataclass
 class RecordingRenderer(Renderer):
     order: list[str]
@@ -117,3 +149,90 @@ def test_game_loop_skips_update_and_render_when_scene_exits():
     game_loop.run()
 
     assert order == ["poll", "handle_events"]
+
+
+def test_game_loop_calls_global_on_keypress_when_allowed():
+    order: list[str] = []
+    manager = RecordingGlobalSceneManager(allow_global=True, order=order)
+    renderer = RecordingRenderer(order)
+    events = [
+        InputEvent(type="KEYDOWN", payload={"key": "A"}),
+        InputEvent(type="QUIT"),
+    ]
+
+    def record_global(key: str) -> None:
+        order.append(f"global:{key}")
+
+    game_loop = GameLoop(
+        manager,
+        renderer,
+        RecordingEventSource(events, order),
+        RecordingTimeSource(order),
+        global_on_keypress=record_global,
+    )
+
+    game_loop.run()
+
+    assert order == [
+        "poll",
+        "handle_events",
+        "global:A",
+        "tick",
+        "update",
+        "render",
+        "present",
+    ]
+
+
+def test_game_loop_skips_global_on_keypress_when_handled():
+    order: list[str] = []
+    manager = RecordingGlobalSceneManager(
+        allow_global=True,
+        order=order,
+        mark_handled=True,
+    )
+    renderer = RecordingRenderer(order)
+    events = [
+        InputEvent(type="KEYDOWN", payload={"key": "A"}),
+        InputEvent(type="QUIT"),
+    ]
+
+    def record_global(key: str) -> None:
+        order.append(f"global:{key}")
+
+    game_loop = GameLoop(
+        manager,
+        renderer,
+        RecordingEventSource(events, order),
+        RecordingTimeSource(order),
+        global_on_keypress=record_global,
+    )
+
+    game_loop.run()
+
+    assert "global:A" not in order
+
+
+def test_game_loop_skips_global_on_keypress_when_disallowed():
+    order: list[str] = []
+    manager = RecordingGlobalSceneManager(allow_global=False, order=order)
+    renderer = RecordingRenderer(order)
+    events = [
+        InputEvent(type="KEYDOWN", payload={"key": "A"}),
+        InputEvent(type="QUIT"),
+    ]
+
+    def record_global(key: str) -> None:
+        order.append(f"global:{key}")
+
+    game_loop = GameLoop(
+        manager,
+        renderer,
+        RecordingEventSource(events, order),
+        RecordingTimeSource(order),
+        global_on_keypress=record_global,
+    )
+
+    game_loop.run()
+
+    assert "global:A" not in order

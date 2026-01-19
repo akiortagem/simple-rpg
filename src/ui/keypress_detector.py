@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from ..core.contracts import Key
+
 from .base import LayoutNode, Rect, Size, UIElement
 
 
@@ -17,6 +19,7 @@ class KeypressDetector:
 
     content: UIElement | None = None
     on_interact: Callable[[], None] | None = None
+    on_keypress: Callable[[Key], bool | None] | None = None
 
     def measure(self, bounds: Size) -> Size:
         """Return the preferred size of the content element."""

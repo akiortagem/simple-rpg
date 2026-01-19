@@ -23,6 +23,7 @@ class SceneManager:
     ) -> None:
         self._current_scene: Scene | None = None
         self._overlay_scenes: list[Scene] = []
+        self._blocking_overlays: set[Scene] = set()
         self._config = config or GameConfig()
         self._exit_requested = False
         if initial_scene is not None:
@@ -53,6 +54,14 @@ class SceneManager:
         scene.config = self._config
         self._overlay_scenes.append(scene)
         scene.on_enter()
+
+    def push_scene(self, scene: Scene) -> None:
+        """Pause the current scene and push a blocking scene above it."""
+        if self._current_scene is None:
+            self.set_scene(scene)
+            return
+        self.push_overlay(scene)
+        self._blocking_overlays.add(scene)
 
     def pop_overlay(self, scene: Scene | None = None) -> Scene | None:
         """Remove the top-most or specified overlay scene, if any."""
@@ -89,18 +98,40 @@ class SceneManager:
         overlays_top_to_bottom = list(reversed(self._overlay_scenes))
         return LayeredScene([*overlays_top_to_bottom, self._current_scene])
 
+    def _scenes_for_input_update(self) -> list[Scene]:
+        if self._current_scene is None:
+            return []
+        if not self._overlay_scenes:
+            return [self._current_scene]
+        overlays_top_to_bottom = list(reversed(self._overlay_scenes))
+        if not self._blocking_overlays:
+            return [*overlays_top_to_bottom, self._current_scene]
+        for index, scene in enumerate(overlays_top_to_bottom):
+            if scene in self._blocking_overlays:
+                return overlays_top_to_bottom[: index + 1]
+        return overlays_top_to_bottom
+
     def handle_events(self, events: Sequence[InputEvent]) -> None:
         """Forward input events to the active scene."""
-        active_scene = self._active_scene()
-        if active_scene is not None:
-            active_scene.handle_events(events)
+        active_scenes = self._scenes_for_input_update()
+        for scene in active_scenes:
+            scene.handle_events(events)
+
+    def allows_global_keypress(self) -> bool:
+        """Return whether the global key handler should run this frame."""
+        if self._overlay_scenes:
+            return False
+        if self._current_scene is None:
+            return True
+        return not isinstance(self._current_scene, UIScene)
 
     def update(self, delta_time: float) -> None:
         """Advance the active scene by ``delta_time`` seconds."""
-        active_scene = self._active_scene()
-        if active_scene is None:
+        active_scenes = self._scenes_for_input_update()
+        if not active_scenes:
             return
-        active_scene.update(delta_time)
+        for scene in active_scenes:
+            scene.update(delta_time)
         if self._overlay_scenes:
             remaining: list[Scene] = []
             for scene in self._overlay_scenes:
@@ -118,6 +149,7 @@ class SceneManager:
             active_scene.render(renderer)
 
     def _finalize_overlay(self, scene: Scene) -> None:
+        self._blocking_overlays.discard(scene)
         scene.on_exit()
         if isinstance(scene, UIScene):
             scene._resolve_pop_future()

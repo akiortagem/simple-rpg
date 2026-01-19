@@ -37,6 +37,7 @@ class Key:
     LEFT = "LEFT"
     RIGHT = "RIGHT"
     ENTER = "ENTER"
+    PAUSE = "PAUSE"
 
 
 class Renderer(Protocol):
