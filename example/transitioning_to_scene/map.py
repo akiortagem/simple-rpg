@@ -142,7 +142,6 @@ class SimpleMapScene(MapSceneBase):
 
     def build(self) -> Map:
         def __coordinates_handler(coord):
-            print(coord)
             if coord == (7, 9):
                 to_scene(DestinationMapScene(pc_start_coordinates=(6,1)))
 
@@ -209,7 +208,7 @@ class SimpleMapScene(MapSceneBase):
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
-                    starting=(2, 14),
+                    starting=(2, 5),
                     npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),

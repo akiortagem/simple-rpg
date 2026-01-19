@@ -206,7 +206,7 @@ class DestinationMapScene(MapSceneBase):
                     npc=PatrollingNPC(PATROL_SPRITESHEET),
                 ),
                 MapNPC(
-                    starting=(2, 14),
+                    starting=(2, 5),
                     npc=IdleNPC(IDLE_SPRITESHEET),
                 ),
             ),
