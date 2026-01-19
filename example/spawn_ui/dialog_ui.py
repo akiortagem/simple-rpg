@@ -24,7 +24,7 @@ class DialogUI(UIScene):
                 content=Container(
                     background_color=(6, 97, 153),
                     border=Border(color=(255, 255, 255), width=2),
-                    width=100,
+                    width=500,
                     height=100,
                     content=Center(
                         content=Text(self.dialog_text, color=(235, 239, 255), size=24)

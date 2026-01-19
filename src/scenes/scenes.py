@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import asyncio
+import math
 from asyncio import Future
 from dataclasses import dataclass
-from typing import Protocol, Sequence
+from typing import Callable, Mapping, Protocol, Sequence
 
 from ..core.contracts import Color, GameConfig, InputEvent, Key, Renderer
 from ..world.map_scene_declarative import DebugCollisionLayer, Map, build_map_scene_assets
@@ -446,6 +447,12 @@ class MapScene(Scene):
         npc_controllers: Sequence[NPCMapController] | None = None,
         base_collision_layer: DebugCollisionLayer | None = None,
         object_collision_layer: DebugCollisionLayer | None = None,
+        # on_coordinate: Mapping[
+        #     tuple[int, int],
+        #     Callable[[MapScene, tuple[int, int]], None],
+        # ]
+        # | None = None,
+        on_coordinate: Callable[[tuple[int, int]], None] | None = None
     ) -> None:
         self.visual_tilemap = visual_tilemap
         self.object_tilemap = object_tilemap
@@ -458,6 +465,8 @@ class MapScene(Scene):
         self._pressed_keys: set[str] = set()
         self._interaction_in_progress = False
         self._interaction_task: asyncio.Task[None] | None = None
+        self._on_coordinate = on_coordinate
+        self._last_tile_coordinate: tuple[int, int] | None = None
         self.camera = MapCamera()
 
         collision_detector = (
@@ -544,6 +553,7 @@ class MapScene(Scene):
             controller.update(delta_time, self.player)
         for sprite in self._all_sprites():
             sprite.update(delta_time)
+        self._handle_on_coordinate()
 
     def _resolve_interaction_task(self, task: asyncio.Task[None]) -> None:
         if self._interaction_task is not task:
@@ -555,6 +565,46 @@ class MapScene(Scene):
             task.result()
         except Exception:
             return None
+
+    def _handle_on_coordinate(self) -> None:
+        if not self._on_coordinate:
+            return
+        coordinate = self._player_tile_coordinate()
+        if coordinate is None or coordinate == self._last_tile_coordinate:
+            return
+        self._last_tile_coordinate = coordinate
+        self._on_coordinate(coordinate)
+        # handler = self._on_coordinate.get(coordinate)
+        # if handler:
+        #     handler(self, coordinate)
+
+    def _player_tile_coordinate(self) -> tuple[int, int] | None:
+        """Return the player's (row, column) tile using the hitbox feet position."""
+
+        tile_size = self._resolve_tile_size()
+        if tile_size is None:
+            return None
+        tile_width, tile_height = tile_size
+        if tile_width <= 0 or tile_height <= 0:
+            return None
+
+        x, y, width, height = self.player.hitbox
+        sample_x = x + width * 0.5
+        sample_y = math.nextafter(y + height, -math.inf)
+        row = int(sample_y // tile_height)
+        column = int(sample_x // tile_width)
+        return (row, column)
+
+    def _resolve_tile_size(self) -> tuple[int, int] | None:
+        if hasattr(self.visual_tilemap, "tile_size"):
+            return self.visual_tilemap.tile_size
+        if hasattr(self.collision_tilemap, "tilemap"):
+            tilemap = getattr(self.collision_tilemap, "tilemap", None)
+            if tilemap and hasattr(tilemap, "tile_size"):
+                return tilemap.tile_size
+        if hasattr(self.collision_tilemap, "tile_size"):
+            return self.collision_tilemap.tile_size
+        return None
 
     def render(self, renderer: Renderer) -> None:
         renderer.clear(self.background_color)
@@ -749,6 +799,7 @@ class MapSceneBase(MapScene, ABC):
             npc_controllers=assets.npc_controllers,
             base_collision_layer=assets.base_collision_layer,
             object_collision_layer=assets.object_collision_layer,
+            on_coordinate=assets.on_coordinate,
         )
 
 
