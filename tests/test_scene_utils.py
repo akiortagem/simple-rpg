@@ -137,3 +137,32 @@ def test_to_scene_sets_scene_and_triggers_hooks():
     assert manager.current_scene is next_scene
     assert initial_scene.exited is True
     assert next_scene.entered is True
+
+
+def test_push_scene_requires_registered_scene_manager():
+    utils._scene_manager = None
+
+    with pytest.raises(RuntimeError, match="No SceneManager registered"):
+        utils.push_scene(DummyScene())
+
+
+def test_push_scene_rejects_non_scene():
+    manager = SceneManager(initial_scene=DummyScene())
+    utils.register_scene_manager(manager)
+
+    with pytest.raises(TypeError, match="push_scene expects a Scene"):
+        utils.push_scene("not a scene")  # type: ignore[arg-type]
+
+
+def test_push_scene_pushes_blocking_overlay():
+    base = DummyHookScene()
+    manager = SceneManager(initial_scene=base)
+    utils.register_scene_manager(manager)
+    overlay = DummyHookScene()
+
+    utils.push_scene(overlay)
+
+    assert manager.current_scene is base
+    assert manager._overlay_scenes == [overlay]
+    assert overlay in manager._blocking_overlays
+    assert overlay.entered is True

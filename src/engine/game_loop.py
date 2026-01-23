@@ -8,6 +8,8 @@ renders each frame.
 
 from __future__ import annotations
 
+from typing import Callable
+
 from ..core.contracts import EventSource, Renderer, TimeSource
 from .async_scheduler import AsyncScheduler
 from .scene_manager import SceneManager
@@ -23,6 +25,7 @@ class GameLoop:
         events: EventSource,
         clock: TimeSource,
         target_fps: int = 60,
+        global_on_keypress: Callable[[str], None] | None = None,
         scheduler: AsyncScheduler | None = None,
     ) -> None:
         self._scene_manager = scene_manager
@@ -30,6 +33,7 @@ class GameLoop:
         self._events = events
         self._clock = clock
         self._target_fps = target_fps
+        self._global_on_keypress = global_on_keypress
         self._scheduler = scheduler or AsyncScheduler()
         from ..scenes.utils import register_scheduler
 
@@ -42,8 +46,21 @@ class GameLoop:
             event_batch = self._events.poll()
             if any(event.type == "QUIT" for event in event_batch):
                 running = False
-
-            self._scene_manager.handle_events(event_batch)
+            if (
+                self._global_on_keypress
+                and self._scene_manager.allows_global_keypress()
+            ):
+                self._scene_manager.handle_events(event_batch)
+                for event in event_batch:
+                    if event.type != "KEYDOWN" or not event.payload:
+                        continue
+                    if event.payload.get("handled"):
+                        continue
+                    key = event.payload.get("key")
+                    if isinstance(key, str):
+                        self._global_on_keypress(key)
+            else:
+                self._scene_manager.handle_events(event_batch)
 
             if self._scene_manager.should_exit():
                 running = False

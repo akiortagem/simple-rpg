@@ -44,6 +44,14 @@ def to_scene(scene: Scene) -> None:
     _scene_manager.set_scene(scene)
 
 
+def push_scene(scene: Scene) -> None:
+    if not isinstance(scene, Scene):
+        raise TypeError("push_scene expects a Scene instance.")
+    if _scene_manager is None:
+        raise RuntimeError("No SceneManager registered. Call register_scene_manager first.")
+    _scene_manager.push_scene(scene)
+
+
 def spawn_ui(ui_scene: UIScene) -> asyncio.Future[None]:
     if not isinstance(ui_scene, UIScene):
         raise TypeError("spawn_ui expects a UIScene instance.")

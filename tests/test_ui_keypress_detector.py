@@ -86,3 +86,36 @@ def test_keypress_detector_only_fires_in_active_tree():
     )
 
     assert calls == ["hit"]
+
+
+def test_keypress_detector_on_keypress_marks_event_handled():
+    calls: list[str] = []
+
+    def handle_key(key: str) -> bool:
+        calls.append(key)
+        return True
+
+    detector = KeypressDetector(
+        content=Text("Press"),
+        on_keypress=handle_key,
+    )
+    controller = UIController()
+    event = InputEvent(type="KEYDOWN", payload={"key": "X"})
+
+    controller.handle_events([event], detector)
+
+    assert calls == ["X"]
+    assert event.payload["handled"] is True
+
+
+def test_keypress_detector_on_keypress_allows_unhandled_events():
+    detector = KeypressDetector(
+        content=Text("Press"),
+        on_keypress=lambda key: False,
+    )
+    controller = UIController()
+    event = InputEvent(type="KEYDOWN", payload={"key": "X"})
+
+    controller.handle_events([event], detector)
+
+    assert event.payload.get("handled") is None
